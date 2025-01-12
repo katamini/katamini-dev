@@ -19,7 +19,7 @@ jobs:
 
       - name: Build project
         run: |
-          npm install
+          npm install --force
           npm run build
 
       - name: Upload production-ready build files
