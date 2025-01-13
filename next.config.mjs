@@ -13,6 +13,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  output: "export",
+  basePath: "/katamini",
   images: {
     unoptimized: true,
   },
