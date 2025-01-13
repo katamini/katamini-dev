@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Npm install
+        run: |
+          npm install --force
+          npm audit fix
 
       - name: Detect package manager
         id: detect-package-manager
