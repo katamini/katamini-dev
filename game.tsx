@@ -37,11 +37,11 @@ const gameObjects: GameObject[] = [
 
 // Size tiers for controlled growth
 const sizeTiers = [
-  { min: 0, max: 2, growthRate: 0.005 },
-  { min: 2, max: 5, growthRate: 0.003 },
-  { min: 5, max: 10, growthRate: 0.002 },
-  { min: 10, max: 20, growthRate: 0.001 },
-  { min: 20, max: Infinity, growthRate: 0.0005 },
+  { min: 0, max: 2, growthRate: 0.3 },
+  { min: 2, max: 5, growthRate: 0.25 },
+  { min: 5, max: 10, growthRate: 0.2 },
+  { min: 10, max: 20, growthRate: 0.15 },
+  { min: 20, max: Infinity, growthRate: 0.1 },
 ]
 
 // Multiply objects for better distribution
@@ -68,7 +68,7 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null)
   const [gameState, setGameState] = useState<GameState>({
-    playerSize: 1.5,
+    playerSize: 0.5,
     collectedObjects: [],
     timeElapsed: 0,
   })
@@ -124,7 +124,7 @@ const Game: React.FC = () => {
     })
     const player = new THREE.Mesh(playerGeometry, playerMaterial)
     player.position.y = 0.25 // Start closer to the ground
-    player.scale.setScalar(0.75) // Increased initial size
+    player.scale.setScalar(0.5) // Initial size
     player.castShadow = true
     player.receiveShadow = true
     scene.add(player)
@@ -195,13 +195,22 @@ const Game: React.FC = () => {
       requestAnimationFrame(animate)
       time += 0.016
 
+      // Find the smallest remaining object
+      const smallestObject = objects.reduce((smallest, obj) => {
+        if (obj.parent === scene && obj.userData.size < smallest.userData.size) {
+          return obj
+        }
+        return smallest
+      }, { userData: { size: Infinity } })
+
       // Update aura uniforms and visibility
       objects.forEach((object, index) => {
         if (object.parent === scene) {
           const aura = auras[index]
           if (aura) {
             aura.material.uniforms.time.value = time
-            aura.visible = object.userData.size <= gameState.playerSize * 1.2
+            // Make objects collectible if they're the smallest remaining or within 20% of the player's size
+            aura.visible = object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)
           }
         }
       })
@@ -258,55 +267,64 @@ const Game: React.FC = () => {
           const combinedRadius = player.scale.x * 0.5 + (object.userData.size * 0.05)
           
           if (distance < combinedRadius) {
-            if (object.userData.size <= gameState.playerSize * 1.2) { // Reduced from 1.5 to 1.2
+            if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
               // Collect object
               scene.remove(object)
               
               // Add to collected objects with position on the surface of the ball
               const surfacePosition = object.position.clone().sub(player.position).normalize().multiplyScalar(player.scale.x * 0.5)
               object.position.copy(surfacePosition)
-              object.scale.multiplyScalar(0.9) // Increased from 0.8 to 0.9 for better visibility
+              object.scale.multiplyScalar(0.9)
               collectedObjectsContainer.add(object)
+              object.userData.orbitOffset = Math.random() * Math.PI * 2
 
-              // Update game state with controlled growth
-              const currentTier = sizeTiers.find(tier => gameState.playerSize >= tier.min && gameState.playerSize < tier.max)
-              const growthRate = currentTier ? currentTier.growthRate : 0.001
-              
-              setGameState(prev => ({
-                ...prev,
-                playerSize: prev.playerSize + object.userData.size * growthRate,
-                collectedObjects: [...prev.collectedObjects, {
-                  type: 'object',
-                  size: object.userData.size,
-                  position: surfacePosition.toArray(),
-                  rotation: [0, 0, 0],
-                  scale: 0.9,
-                  model: '',
-                  color: '#ffffff'
-                }]
-              }))
+              // Update game state
+              setGameState(prev => {
+                const currentTier = sizeTiers.find(tier => prev.playerSize >= tier.min && prev.playerSize < tier.max)
+                const growthRate = currentTier ? currentTier.growthRate : 0.1
+                const newPlayerSize = prev.playerSize + object.userData.size * growthRate
 
-              // Grow player
-              const growFactor = 1 + (object.userData.size * growthRate)
-              player.scale.multiplyScalar(growFactor)
+                return {
+                  ...prev,
+                  playerSize: newPlayerSize,
+                  collectedObjects: [...prev.collectedObjects, {
+                    type: 'object',
+                    size: object.userData.size,
+                    position: surfacePosition.toArray(),
+                    rotation: [0, 0, 0],
+                    scale: 0.9,
+                    model: '',
+                    color: '#ffffff'
+                  }]
+                }
+              })
+
+              // Adjust player size
+              const targetScale = gameState.playerSize
+              player.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1)
               
               // Adjust collected objects
               collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
                 const childSize = child.userData.size
-                const scaleFactor = Math.min(1, (gameState.playerSize * 0.15) / childSize) // Increased from 0.1 to 0.15
+                const scaleFactor = Math.min(1, (gameState.playerSize * 0.2) / childSize)
                 child.scale.setScalar(scaleFactor)
                 
                 // Remove objects that are too small to see
-                if (scaleFactor < 0.05) { // Increased from 0.01 to 0.05
+                if (scaleFactor < 0.05) {
                   collectedObjectsContainer.remove(child)
                 } else {
-                  // Adjust position to stay on the surface of the growing ball
-                  const direction = child.position.clone().normalize()
-                  child.position.copy(direction.multiplyScalar(player.scale.x * 0.5))
+                  // Adjust position to orbit around the growing ball
+                  const orbitRadius = player.scale.x * 0.7
+                  const angle = time * 0.5 + child.userData.orbitOffset
+                  child.position.set(
+                    Math.cos(angle) * orbitRadius,
+                    Math.sin(angle * 0.7) * orbitRadius * 0.5,
+                    Math.sin(angle) * orbitRadius
+                  )
                 }
               })
 
-              cameraOffset.z *= growFactor
+              cameraOffset.z = Math.max(5, player.scale.x * 4)
             } else {
               // Bounce off larger objects
               collisionOccurred = true
@@ -336,11 +354,11 @@ const Game: React.FC = () => {
       player.position.y = Math.max(player.scale.y * 0.5, player.position.y)
 
       // Rotate collected objects container
-      collectedObjectsContainer.rotation.y += 0.01
+      // collectedObjectsContainer.rotation.y += 0.01
 
       // Update camera zoom based on player size
-      const targetZoom = THREE.MathUtils.clamp(player.scale.x * 5, minZoom, maxZoom)
-      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1)
+      const targetZoom = THREE.MathUtils.clamp(player.scale.x * 6, minZoom, maxZoom)
+      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.05)
       cameraOffset.z = currentZoom
 
       // Update camera position
