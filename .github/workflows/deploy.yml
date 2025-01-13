@@ -24,7 +24,6 @@ jobs:
       - name: Npm install
         run: |
           npm install --force
-          npm audit fix
 
       - name: Detect package manager
         id: detect-package-manager
