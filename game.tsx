@@ -11,7 +11,7 @@ import type { GameObject, GameState } from "./types/game";
 // Organized game objects by size tiers
 const gameObjects: GameObject[] = [
   // Tier 1 (0-2cm)
-  { type: 'paperclip', size: 1, model: 'models/paperclip.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
+  { type: 'paperclip', size: 0.5, model: 'models/paperclip.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
   { type: 'eraser', size: 1, model: 'models/eraser.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1', sound: 'music/blips/02.mp3' },
   { type: 'coin', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 1, color: '#FFD700', sound: 'music/blips/03.mp3' },
   
@@ -330,8 +330,8 @@ const Game: React.FC = () => {
     // Camera setup
     const cameraOffset = new THREE.Vector3(0, 2, 5);
     const minZoom = 5;
-    const maxZoom = 150; // 30
-    let currentZoom = minZoom; // minZoom
+    const maxZoom = 100; 
+    let currentZoom = minZoom; 
     camera.position.copy(player.position).add(cameraOffset);
     camera.lookAt(player.position);
 
@@ -581,7 +581,7 @@ const Game: React.FC = () => {
 
       // Update camera zoom based on player size
       const targetZoom = THREE.MathUtils.clamp(
-        player.scale.x * 2,
+        player.scale.x * 1,
         minZoom,
         maxZoom
       );
