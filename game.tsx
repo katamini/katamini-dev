@@ -120,15 +120,16 @@ const Game: React.FC = () => {
     };
 
     if (userInteracted) {
-      playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
+      playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
       playAudio();
     }
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && userInteracted) {
+        playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
         playAudio();
       } else {
-        playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
+        playRandomSound(['music/effects/02.mp3']);
         audio.pause();
       }
     };
