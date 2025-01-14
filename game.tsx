@@ -34,16 +34,14 @@ const gameObjects: GameObject[] = [
   { type: 'table', size: 25, model: '/models/table.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 1, color: '#5D4037' },
   { type: 'desk', size: 30, model: '/models/desk.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 1, color: '#3E2723' },
 ]
-
 // Size tiers for controlled growth
 const sizeTiers = [
   { min: 0, max: 2, growthRate: 0.3 },
   { min: 2, max: 5, growthRate: 0.25 },
-  { min: 5, max: 10, growthRate: 0.2 },
-  { min: 10, max: 20, growthRate: 0.15 },
-  { min: 20, max: Infinity, growthRate: 0.1 },
+  { min: 5, max: 10, growthRate: 0.25 },
+  { min: 10, max: 20, growthRate: 0.25 },
+  { min: 20, max: Infinity, growthRate: 0.15 },
 ]
-
 // Multiply objects for better distribution
 const distributeObjects = (objects: GameObject[]): GameObject[] => {
   const distributed: GameObject[] = []
@@ -67,12 +65,68 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const [gameState, setGameState] = useState<GameState>({
     playerSize: 0.5,
     collectedObjects: [],
     timeElapsed: 0,
   })
+  const [userInteracted, setUserInteracted] = useState(false);
 
+  // readystate
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      setUserInteracted(true);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+    };
+
+    window.addEventListener('click', handleUserInteraction);
+    window.addEventListener('keydown', handleUserInteraction);
+
+    return () => {
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
+  
+  // music
+  useEffect(() => {
+    const audio = new Audio('music/katamini_01.mp3')
+    audio.loop = true
+    audio.volume = 0.4
+    audioRef.current = audio
+
+    const playAudio = () => {
+      audio.play().catch(error => {
+        console.log('Failed to play audio:', error)
+      })
+    }
+
+    if (userInteracted) {
+      playAudio();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && userInteracted) {
+        playAudio()
+      } else {
+        audio.pause()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [userInteracted])
+
+  // game
   useEffect(() => {
     if (!mountRef.current) return
 
@@ -416,9 +470,9 @@ const Game: React.FC = () => {
     <>
       <div ref={mountRef} />
       <SizeIndicator size={gameState.playerSize} />
+      <audio ref={audioRef} />
     </>
   )
 }
 
 export default Game
-
