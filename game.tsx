@@ -356,9 +356,22 @@ const Game: React.FC = () => {
         },
         { userData: { size: Infinity } }
       );
+      // Find the largest remaining object
+      const largestObject = objects.reduce(
+        (largest, obj) => {
+          if (
+            obj.parent === scene &&
+            obj.userData.size > largest.userData.size
+          ) {
+            return obj;
+          }
+          return largest;
+        },
+        { userData: { size: Infinity } }
+      );
 
        // Add logic to check if all objects are captured and play a sound
-      if ((Math.floor(gameState.playerSize) > 140) && finished === false) {
+      if ((gameState.playerSize * 1.2 >= largestObject.userData.size) && finished === false) {
         console.log("Game Completed!", time);
         audioRef.current.pause();
         playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
