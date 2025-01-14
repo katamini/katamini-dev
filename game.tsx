@@ -330,7 +330,7 @@ const Game: React.FC = () => {
     // Camera setup
     const cameraOffset = new THREE.Vector3(0, 2, 5);
     const minZoom = 5;
-    const maxZoom = 50; // 30
+    const maxZoom = 150; // 30
     let currentZoom = maxZoom; // minZoom
     camera.position.copy(player.position).add(cameraOffset);
     camera.lookAt(player.position);
