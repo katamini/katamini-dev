@@ -10,4 +10,7 @@ Katamini is a _work in progress, unfinished, barely playable_ [Katamari tribute]
   <img src="https://github.com/user-attachments/assets/2368e727-5640-47cd-878a-62e498c5af63" /><br>
 </a>
 
-> This is a work of parody. All rights reserved by their respective owners.
+![Katamini_demo-ezgif com-optimize](https://github.com/user-attachments/assets/0d210305-74e0-473b-96fa-d77987593c8e)
+
+
+> This demo is a work of parody. All rights reserved by their respective owners.
