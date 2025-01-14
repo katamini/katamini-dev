@@ -1,39 +1,40 @@
-'use client'
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react'
-import * as THREE from 'three'
-import { createNoise2D } from 'simplex-noise'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { SizeIndicator } from './components/size-indicator'
-import { auraVertexShader, auraFragmentShader } from './shaders/aura'
-import type { GameObject, GameState } from './types/game'
+import React, { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { createNoise2D } from "simplex-noise";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { SizeIndicator } from "./components/size-indicator";
+import { auraVertexShader, auraFragmentShader } from "./shaders/aura";
+import type { GameObject, GameState } from "./types/game";
 
 // Organized game objects by size tiers
 const gameObjects: GameObject[] = [
   // Tier 1 (0-2cm)
-  { type: 'paperclip', size: 0.5, model: '/models/paperclip.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1' },
-  { type: 'eraser', size: 1, model: '/models/eraser.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1' },
-  { type: 'coin', size: 1.5, model: '/models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 1, color: '#FFD700' },
+  { type: 'paperclip', size: 0.5, model: 'models/paperclip.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
+  { type: 'eraser', size: 1, model: 'models/eraser.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1', sound: 'music/blips/02.mp3' },
+  { type: 'coin', size: 1.5, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 1, color: '#FFD700', sound: 'music/blips/03.mp3' },
   
   // Tier 2 (2-5cm)
-  { type: 'pencil', size: 2.5, model: '/models/pencil.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50' },
-  { type: 'spoon', size: 3, model: '/models/spoon.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 1, color: '#9E9E9E' },
-  { type: 'toy_car', size: 4, model: '/models/toy_car.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3' },
+  { type: 'pencil', size: 2.5, model: 'models/pencil.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50', sound: 'music/blips/04.mp3' },
+  { type: 'spoon', size: 3, model: 'models/spoon.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 1, color: '#9E9E9E', sound: 'music/blips/05.mp3' },
+  { type: 'toy_car', size: 4, model: 'models/toy_car.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3', sound: 'music/blips/06.mp3' },
   
   // Tier 3 (5-10cm)
-  { type: 'mug', size: 6, model: '/models/mug.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 1, color: '#FF5722' },
-  { type: 'book', size: 8, model: '/models/book.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 1, color: '#795548' },
-  { type: 'plate', size: 9, model: '/models/plate.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#E0E0E0' },
+  { type: 'mug', size: 6, model: 'models/mug.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 1, color: '#FF5722', sound: 'music/blips/07.mp3' },
+  { type: 'book', size: 8, model: 'models/book.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/08.mp3' },
+  { type: 'plate', size: 9, model: 'models/plate.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
   
   // Tier 4 (10-20cm)
-  { type: 'laptop', size: 12, model: '/models/laptop.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 1, color: '#9C27B0' },
-  { type: 'box', size: 15, model: '/models/box.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63' },
-  { type: 'chair', size: 18, model: '/models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 1, color: '#795548' },
+  { type: 'laptop', size: 12, model: 'models/laptop.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 1, color: '#9C27B0', sound: 'music/blips/10.mp3' },
+  { type: 'box', size: 15, model: 'models/box.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
+  { type: 'chair', size: 18, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/02.mp3' },
   
   // Tier 5 (20cm+)
-  { type: 'table', size: 25, model: '/models/table.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 1, color: '#5D4037' },
-  { type: 'desk', size: 30, model: '/models/desk.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 1, color: '#3E2723' },
-]
+  { type: 'table', size: 25, model: 'models/table.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 1, color: '#5D4037', sound: 'music/blips/03.mp3' },
+  { type: 'desk', size: 30, model: 'models/desk.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 1, color: '#3E2723', sound: 'music/blips/04.mp3' },
+];
+
 // Size tiers for controlled growth
 const sizeTiers = [
   { min: 0, max: 2, growthRate: 0.3 },
@@ -41,160 +42,181 @@ const sizeTiers = [
   { min: 5, max: 10, growthRate: 0.25 },
   { min: 10, max: 20, growthRate: 0.25 },
   { min: 20, max: Infinity, growthRate: 0.15 },
-]
+];
 // Multiply objects for better distribution
 const distributeObjects = (objects: GameObject[]): GameObject[] => {
-  const distributed: GameObject[] = []
-  objects.forEach(obj => {
-    const count = obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2
+  const distributed: GameObject[] = [];
+  objects.forEach((obj) => {
+    const count =
+      obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2;
     for (let i = 0; i < count; i++) {
-      const distance = Math.pow(obj.size, 1.2) * 0.8
-      const angle = Math.random() * Math.PI * 2
+      const distance = Math.pow(obj.size, 1.2) * 0.5;
+      const angle = Math.random() * Math.PI * 2;
       distributed.push({
         ...obj,
         position: [
           Math.cos(angle) * distance,
           obj.position[1],
-          Math.sin(angle) * distance
-        ]
-      })
+          Math.sin(angle) * distance,
+        ],
+      });
     }
-  })
-  return distributed
-}
+  });
+  return distributed;
+};
 
 const Game: React.FC = () => {
-  const mountRef = useRef<HTMLDivElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const mountRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blipSoundRef = useRef<HTMLAudioElement | null>(null);
   const [gameState, setGameState] = useState<GameState>({
     playerSize: 0.5,
     collectedObjects: [],
     timeElapsed: 0,
-  })
+  });
   const [userInteracted, setUserInteracted] = useState(false);
+  const loader = new GLTFLoader();
+
+  const playRandomSound = (sounds: string[]) => {
+      const randomIndex = Math.floor(Math.random() * sounds.length);
+      const sound = new Audio(sounds[randomIndex]);
+      sound.volume = 0.4;
+      sound.play().catch(error => {
+        console.log('Failed to play sound:', error);
+      });
+    };
 
   // readystate
   useEffect(() => {
     const handleUserInteraction = () => {
       setUserInteracted(true);
-      window.removeEventListener('click', handleUserInteraction);
-      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("keydown", handleUserInteraction);
     };
 
-    window.addEventListener('click', handleUserInteraction);
-    window.addEventListener('keydown', handleUserInteraction);
+    window.addEventListener("click", handleUserInteraction);
+    window.addEventListener("keydown", handleUserInteraction);
 
     return () => {
-      window.removeEventListener('click', handleUserInteraction);
-      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("keydown", handleUserInteraction);
     };
   }, []);
-  
+
   // music
   useEffect(() => {
-    const audio = new Audio('music/katamini_01.mp3')
-    audio.loop = true
-    audio.volume = 0.4
-    audioRef.current = audio
+    const audio = new Audio("music/katamini_01.mp3");
+    const blipSound = new Audio("music/blips/01.mp3");
+    audio.loop = true;
+    audio.volume = 0.4;
+    audioRef.current = audio;
+    blipSound.volume = 0.4;
+    blipSoundRef.current = blipSound;
 
     const playAudio = () => {
-      audio.play().catch(error => {
-        console.log('Failed to play audio:', error)
-      })
-    }
+      audio.play().catch((error) => {
+        console.log("Failed to play audio:", error);
+      });
+    };
 
     if (userInteracted) {
+      playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
       playAudio();
     }
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && userInteracted) {
-        playAudio()
+      if (document.visibilityState === "visible" && userInteracted) {
+        playAudio();
       } else {
-        audio.pause()
+        playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
+        audio.pause();
       }
-    }
+    };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
+        audioRef.current.pause();
+        audioRef.current = null;
       }
-    }
-  }, [userInteracted])
+    };
+  }, [userInteracted]);
 
   // game
   useEffect(() => {
-    if (!mountRef.current) return
+    if (!mountRef.current) return;
 
     // Scene setup
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#E0E0E0')
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.shadowMap.enabled = true
-    mountRef.current.appendChild(renderer.domElement)
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#E0E0E0");
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    mountRef.current.appendChild(renderer.domElement);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 1)
-    scene.add(ambientLight)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-    directionalLight.position.set(10, 20, 10)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 2048
-    directionalLight.shadow.mapSize.height = 2048
-    directionalLight.shadow.camera.near = 0.5
-    directionalLight.shadow.camera.far = 50
-    scene.add(directionalLight)
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 20, 10);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2548;
+    directionalLight.shadow.mapSize.height = 2548;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 50;
+    scene.add(directionalLight);
 
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xFFCACC, 0.3)
-    scene.add(hemisphereLight)
-    
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffcacc, 0.3);
+    scene.add(hemisphereLight);
+
     // Room setup
-    const roomGeometry = new THREE.BoxGeometry(50, 20, 50)
-    const roomMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xFFECB3,
-      side: THREE.BackSide 
-    })
-    const room = new THREE.Mesh(roomGeometry, roomMaterial)
-    room.position.y = 10
-    scene.add(room)
+    const roomGeometry = new THREE.BoxGeometry(50, 20, 50);
+    const roomMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffecb3,
+      side: THREE.BackSide,
+    });
+    const room = new THREE.Mesh(roomGeometry, roomMaterial);
+    room.position.y = 10;
+    scene.add(room);
 
     // Floor
-    const floorGeometry = new THREE.PlaneGeometry(50, 50)
-    const floorMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xFFCACC,
+    const floorGeometry = new THREE.PlaneGeometry(50, 50);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffcacc,
       roughness: 0.8,
-      side: THREE.DoubleSide
-    })
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial)
-    floor.rotation.x = -Math.PI / 2
-    floor.position.y = 0.01 
-    floor.receiveShadow = true
-    scene.add(floor)
-
+      side: THREE.DoubleSide,
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
     // Player (Katamari)
-    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32)
-    const playerMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x4CAF50, // Green
+    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const playerMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4caf50, // Green
       roughness: 0.3,
-      metalness: 0.2
-    })
-    const player = new THREE.Mesh(playerGeometry, playerMaterial)
-    player.position.y = 0.25 // Start closer to the ground
-    player.scale.setScalar(0.5) // Initial size
-    player.castShadow = true
-    player.receiveShadow = true
-    scene.add(player)
+      metalness: 0.2,
+    });
+    const player = new THREE.Mesh(playerGeometry, playerMaterial);
+    player.position.y = 0.25; // Start closer to the ground
+    player.scale.setScalar(0.5); // Initial size
+    player.castShadow = true;
+    player.receiveShadow = true;
+    scene.add(player);
 
     // Collected objects container
-    const collectedObjectsContainer = new THREE.Group()
-    player.add(collectedObjectsContainer)
+    const collectedObjectsContainer = new THREE.Group();
+    player.add(collectedObjectsContainer);
 
     // Create aura material
     const auraMaterial = new THREE.ShaderMaterial({
@@ -202,277 +224,406 @@ const Game: React.FC = () => {
       fragmentShader: auraFragmentShader,
       transparent: true,
       uniforms: {
-        time: { value: 0 }
-      }
-    })
+        time: { value: 0 },
+      },
+    });
 
     // Load game objects
-    const objects: THREE.Object3D[] = []
-    const auras: THREE.Mesh[] = []
-    
-    distributeObjects(gameObjects).forEach(obj => {
-      // Create object
-      const geometry = new THREE.BoxGeometry(obj.size * 0.1, obj.size * 0.1, obj.size * 0.1)
-      const material = new THREE.MeshStandardMaterial({ color: obj.color })
-      const mesh = new THREE.Mesh(geometry, material)
-      mesh.position.set(...obj.position)
-      mesh.rotation.set(...obj.rotation)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      mesh.userData.size = obj.size
-      scene.add(mesh)
-      objects.push(mesh)
+    const objects: THREE.Object3D[] = [];
+    const auras: THREE.Mesh[] = [];
 
-      // Create aura
-      const auraGeometry = new THREE.SphereGeometry(obj.size * 0.06, 32, 32)
-      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone())
-      auraMesh.scale.multiplyScalar(1.2)
-      auraMesh.visible = false
-      mesh.add(auraMesh)
-      auras.push(auraMesh)
-    })
+    distributeObjects(gameObjects).forEach((obj) => {
+      loader.load(
+        obj.model,
+        (gltf) => {
+          const model = gltf.scene;
+          model.position.set(...obj.position);
+
+          // Add random rotation
+          model.rotation.set(
+            obj.rotation[0] + Math.random() * Math.PI,
+            obj.rotation[1] + Math.random() * Math.PI,
+            obj.rotation[2] + Math.random() * Math.PI
+          );
+
+          model.scale.setScalar(obj.size * 0.1); // Respect the size
+          model.userData.size = obj.size; // Set userData.size for interaction logic
+
+          // Adjust position to be above the floor
+          model.position.y = obj.size * 0.05;
+
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              (child as THREE.Mesh).castShadow = true;
+              (child as THREE.Mesh).receiveShadow = true;
+            }
+          });
+          scene.add(model);
+          objects.push(model);
+
+          // Create aura
+          const auraGeometry = new THREE.SphereGeometry(
+            obj.size * 0.15,
+            32,
+            32
+          );
+          const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
+          auraMesh.scale.multiplyScalar(1.2);
+          auraMesh.visible = false;
+          model.add(auraMesh);
+          auras.push(auraMesh);
+        },
+        undefined,
+        () => {
+          // If loading fails, create a default block
+          const geometry = new THREE.BoxGeometry(
+            obj.size * 0.1,
+            obj.size * 0.1,
+            obj.size * 0.1
+          );
+          const material = new THREE.MeshStandardMaterial({ color: obj.color });
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.position.set(...obj.position);
+          mesh.rotation.set(...obj.rotation);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          mesh.userData.size = obj.size; // Set userData.size for interaction logic
+
+          // Adjust position to be above the floor
+          mesh.position.y = obj.size * 0.005;
+
+          scene.add(mesh);
+          objects.push(mesh);
+
+          // Create aura
+          const auraGeometry = new THREE.SphereGeometry(
+            obj.size * 0.06,
+            32,
+            32
+          );
+          const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
+          auraMesh.scale.multiplyScalar(1.2);
+          auraMesh.visible = false;
+          mesh.add(auraMesh);
+          auras.push(auraMesh);
+        }
+      );
+    });
 
     // Player movement properties
-    const playerVelocity = new THREE.Vector3()
-    const playerDirection = new THREE.Vector3(0, 0, -1)
-    const rotationSpeed = 0.02
-    const acceleration = 0.003
-    const maxSpeed = 0.2
-    const friction = 0.99
-    const bounceForce = 0.3
-    const gravity = 0.01
-    const jumpForce = 0.2
-    let isGrounded = false
+    const playerVelocity = new THREE.Vector3();
+    const playerDirection = new THREE.Vector3(0, 0, -1);
+    const rotationSpeed = 0.02;
+    const acceleration = 0.003;
+    const maxSpeed = 0.2;
+    const friction = 0.99;
+    const bounceForce = 0.3;
+    const gravity = 0.01;
+    const jumpForce = 0.2;
+    let isGrounded = false;
 
     // Camera setup
-    const cameraOffset = new THREE.Vector3(0, 2, 5)
-    const minZoom = 5
-    const maxZoom = 30
-    let currentZoom = minZoom
-    camera.position.copy(player.position).add(cameraOffset)
-    camera.lookAt(player.position)
+    const cameraOffset = new THREE.Vector3(0, 2, 5);
+    const minZoom = 5;
+    const maxZoom = 30;
+    let currentZoom = minZoom;
+    camera.position.copy(player.position).add(cameraOffset);
+    camera.lookAt(player.position);
+
+    let finished = false;
 
     // Game loop
-    let time = 0
+    let time = 0;
     const animate = () => {
-      requestAnimationFrame(animate)
-      time += 0.016
+      requestAnimationFrame(animate);
+      time += 0.016;
 
       // Find the smallest remaining object
-      const smallestObject = objects.reduce((smallest, obj) => {
-        if (obj.parent === scene && obj.userData.size < smallest.userData.size) {
-          return obj
-        }
-        return smallest
-      }, { userData: { size: Infinity } })
+      const smallestObject = objects.reduce(
+        (smallest, obj) => {
+          if (
+            obj.parent === scene &&
+            obj.userData.size < smallest.userData.size
+          ) {
+            return obj;
+          }
+          return smallest;
+        },
+        { userData: { size: Infinity } }
+      );
 
+       // Add logic to check if all objects are captured and play a sound
+      if (objects.length === 0 && finished === false) {
+        audioRef.current.pause();
+        playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
+        finished = true;
+      }
+  
       // Update aura uniforms and visibility
       objects.forEach((object, index) => {
         if (object.parent === scene) {
-          const aura = auras[index]
+          const aura = auras[index];
           if (aura) {
-            aura.material.uniforms.time.value = time
+            aura.material.uniforms.time.value = time;
             // Make objects collectible if they're the smallest remaining or within 20% of the player's size
-            aura.visible = object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)
+            aura.visible =
+              object.userData.size <=
+              Math.max(
+                gameState.playerSize * 1.2,
+                smallestObject.userData.size
+              );
           }
         }
-      })
+      });
 
       // Player movement
-      const moveDirection = new THREE.Vector3()
-      if (keys.ArrowUp) moveDirection.z -= 1
-      if (keys.ArrowDown) moveDirection.z += 1
+      const moveDirection = new THREE.Vector3();
+      if (keys.ArrowUp) moveDirection.z -= 1;
+      if (keys.ArrowDown) moveDirection.z += 1;
 
       // Apply acceleration in the player's direction
-      playerVelocity.add(playerDirection.clone().multiplyScalar(moveDirection.z * acceleration))
+      playerVelocity.add(
+        playerDirection.clone().multiplyScalar(moveDirection.z * acceleration)
+      );
 
       // Apply gravity
-      playerVelocity.y -= gravity
+      playerVelocity.y -= gravity;
 
       // Check if player is on the ground
-      isGrounded = player.position.y <= player.scale.y * 0.5
+      isGrounded = player.position.y <= player.scale.y * 0.5;
       if (isGrounded) {
-        player.position.y = player.scale.y * 0.5
-        playerVelocity.y = Math.max(0, playerVelocity.y)
+        player.position.y = player.scale.y * 0.5;
+        playerVelocity.y = Math.max(0, playerVelocity.y);
       }
 
       // Jumping
       if (keys.Space && isGrounded) {
-        playerVelocity.y = jumpForce
+        playerVelocity.y = jumpForce;
       }
 
       // Steering
       if (keys.ArrowLeft) {
-        playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed)
+        playerDirection.applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          rotationSpeed
+        );
       }
       if (keys.ArrowRight) {
-        playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed)
+        playerDirection.applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          -rotationSpeed
+        );
       }
 
       // Apply friction and limit speed
-      playerVelocity.multiplyScalar(friction)
+      playerVelocity.multiplyScalar(friction);
       if (playerVelocity.length() > maxSpeed) {
-        playerVelocity.normalize().multiplyScalar(maxSpeed)
+        playerVelocity.normalize().multiplyScalar(maxSpeed);
       }
 
       // Update player position
-      const nextPosition = player.position.clone().add(playerVelocity)
-      
+      const nextPosition = player.position.clone().add(playerVelocity);
+
       // Keep player within bounds
-      nextPosition.x = Math.max(-24, Math.min(24, nextPosition.x))
-      nextPosition.z = Math.max(-24, Math.min(24, nextPosition.z))
+      nextPosition.x = Math.max(-24, Math.min(24, nextPosition.x));
+      nextPosition.z = Math.max(-24, Math.min(24, nextPosition.z));
 
       // Check collisions with objects
-      let collisionOccurred = false
+      let collisionOccurred = false;
       objects.forEach((object, index) => {
         if (object.parent === scene) {
-          const distance = nextPosition.distanceTo(object.position)
-          const combinedRadius = player.scale.x * 0.5 + (object.userData.size * 0.05)
-          
+          const distance = nextPosition.distanceTo(object.position);
+          const combinedRadius =
+            player.scale.x * 0.5 + object.userData.size * 0.05;
+
           if (distance < combinedRadius) {
-            if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
+            if (
+              object.userData.size <=
+              Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)
+            ) {
               // Collect object
-              scene.remove(object)
-              
+              scene.remove(object);
+
               // Add to collected objects with position on the surface of the ball
-              const surfacePosition = object.position.clone().sub(player.position).normalize().multiplyScalar(player.scale.x * 0.5)
-              object.position.copy(surfacePosition)
-              object.scale.multiplyScalar(0.9)
-              collectedObjectsContainer.add(object)
-              object.userData.orbitOffset = Math.random() * Math.PI * 2
+              const surfacePosition = new THREE.Vector3(
+                (Math.random() - 0.5) * player.scale.x,
+                (Math.random() - 0.5) * player.scale.x,
+                (Math.random() - 0.5) * player.scale.x
+              )
+                .normalize()
+                .multiplyScalar(player.scale.x * 0.5);
+              object.position.copy(surfacePosition);
+              object.scale.multiplyScalar(0.9);
+              collectedObjectsContainer.add(object);
+              object.userData.orbitOffset = Math.random() * Math.PI * 2;
+
+              // Play blip sound
+              if (blipSoundRef.current) {
+                blipSoundRef.current.play().catch((error) => {
+                  console.log("Failed to play blip sound:", error);
+                });
+              }
 
               // Update game state
-              setGameState(prev => {
-                const currentTier = sizeTiers.find(tier => prev.playerSize >= tier.min && prev.playerSize < tier.max)
-                const growthRate = currentTier ? currentTier.growthRate : 0.1
-                const newPlayerSize = prev.playerSize + object.userData.size * growthRate
+              setGameState((prev) => {
+                const currentTier = sizeTiers.find(
+                  (tier) =>
+                    prev.playerSize >= tier.min && prev.playerSize < tier.max
+                );
+                const growthRate = currentTier ? currentTier.growthRate : 0.1;
+                const newPlayerSize =
+                  prev.playerSize + object.userData.size * growthRate;
 
                 return {
                   ...prev,
                   playerSize: newPlayerSize,
-                  collectedObjects: [...prev.collectedObjects, {
-                    type: 'object',
-                    size: object.userData.size,
-                    position: surfacePosition.toArray(),
-                    rotation: [0, 0, 0],
-                    scale: 0.9,
-                    model: '',
-                    color: '#ffffff'
-                  }]
-                }
-              })
+                  collectedObjects: [
+                    ...prev.collectedObjects,
+                    {
+                      type: "object",
+                      size: object.userData.size,
+                      position: surfacePosition.toArray(),
+                      rotation: [0, 0, 0],
+                      scale: 0.9,
+                      model: "",
+                      color: "#ffffff",
+                    },
+                  ],
+                };
+              });
 
               // Adjust player size
-              const targetScale = gameState.playerSize
-              player.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1)
-              
-              // Adjust collected objects
-              collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
-                const childSize = child.userData.size
-                const scaleFactor = Math.min(1, (gameState.playerSize * 0.2) / childSize)
-                child.scale.setScalar(scaleFactor)
-                
-                // Remove objects that are too small to see
-                if (scaleFactor < 0.05) {
-                  collectedObjectsContainer.remove(child)
-                } else {
-                  // Adjust position to orbit around the growing ball
-                  const orbitRadius = player.scale.x * 0.7
-                  const angle = time * 0.5 + child.userData.orbitOffset
-                  child.position.set(
-                    Math.cos(angle) * orbitRadius,
-                    Math.sin(angle * 0.7) * orbitRadius * 0.5,
-                    Math.sin(angle) * orbitRadius
-                  )
-                }
-              })
+              const targetScale = gameState.playerSize;
+              player.scale.lerp(
+                new THREE.Vector3(targetScale, targetScale, targetScale),
+                0.1
+              );
 
-              cameraOffset.z = Math.max(5, player.scale.x * 4)
+              // Adjust collected objects
+              collectedObjectsContainer.children.forEach(
+                (child: THREE.Object3D) => {
+                  const childSize = child.userData.size;
+                  const scaleFactor = Math.min(
+                    1,
+                    (gameState.playerSize * 0.2) / childSize
+                  );
+                  child.scale.setScalar(scaleFactor);
+
+                  // Remove objects that are too small to see
+                  if (scaleFactor < 0.05) {
+                    collectedObjectsContainer.remove(child);
+                  } else {
+                    // Adjust position to orbit around the growing ball
+                    const orbitRadius = player.scale.x * 0.7;
+                    const angle = time * 0.5 + child.userData.orbitOffset;
+                    child.position.set(
+                      Math.cos(angle) * orbitRadius,
+                      Math.sin(angle * 0.7) * orbitRadius * 0.5,
+                      Math.sin(angle) * orbitRadius
+                    );
+                  }
+                }
+              );
+
+              cameraOffset.z = Math.max(5, player.scale.x * 4);
             } else {
               // Bounce off larger objects
-              collisionOccurred = true
-              const pushDirection = nextPosition.clone().sub(object.position).normalize()
-              playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce)
-              
+              collisionOccurred = true;
+              const pushDirection = nextPosition
+                .clone()
+                .sub(object.position)
+                .normalize();
+              playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
+
               // Add some "squish" effect to the player
-              player.scale.x *= 0.95
-              player.scale.z *= 1.05
+              player.scale.x *= 0.95;
+              player.scale.z *= 1.05;
               setTimeout(() => {
-                player.scale.x /= 0.95
-                player.scale.z /= 1.05
-              }, 100)
+                player.scale.x /= 0.95;
+                player.scale.z /= 1.05;
+              }, 100);
             }
           }
         }
-      })
+      });
 
       // Update player position if no collision occurred
       if (!collisionOccurred) {
-        player.position.copy(nextPosition)
+        player.position.copy(nextPosition);
       } else {
-        player.position.add(playerVelocity)
+        player.position.add(playerVelocity);
       }
 
       // Ensure player stays above the ground
-      player.position.y = Math.max(player.scale.y * 0.5, player.position.y)
+      player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
 
       // Rotate collected objects container
-      // collectedObjectsContainer.rotation.y += 0.01
+      collectedObjectsContainer.rotation.y += 0.05;
 
       // Update camera zoom based on player size
-      const targetZoom = THREE.MathUtils.clamp(player.scale.x * 6, minZoom, maxZoom)
-      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.05)
-      cameraOffset.z = currentZoom
+      const targetZoom = THREE.MathUtils.clamp(
+        player.scale.x * 5,
+        minZoom,
+        maxZoom
+      );
+      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1);
+      cameraOffset.z = currentZoom;
 
       // Update camera position
-      const idealOffset = cameraOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(playerDirection.x, playerDirection.z))
-      camera.position.lerp(player.position.clone().add(idealOffset), 0.1)
-      camera.lookAt(player.position)
+      const idealOffset = cameraOffset
+        .clone()
+        .applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          Math.atan2(playerDirection.x, playerDirection.z)
+        );
+      camera.position.lerp(player.position.clone().add(idealOffset), 0.1);
+      camera.lookAt(player.position);
 
-      renderer.render(scene, camera)
-    }
+      renderer.render(scene, camera);
+    };
 
     // Keyboard controls
-    const keys: { [key: string]: boolean } = {}
+    const keys: { [key: string]: boolean } = {};
     const onKeyDown = (event: KeyboardEvent) => {
-      keys[event.code] = true
-      if (event.code === 'Space') {
-        event.preventDefault() // Prevent page scrolling
+      keys[event.code] = true;
+      if (event.code === "Space") {
+        event.preventDefault(); // Prevent page scrolling
       }
-    }
+    };
     const onKeyUp = (event: KeyboardEvent) => {
-      keys[event.code] = false
-    }
-    window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('keyup', onKeyUp)
+      keys[event.code] = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 
     // Handle window resize
     const onWindowResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
-    }
-    window.addEventListener('resize', onWindowResize)
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onWindowResize);
 
     // Start the game loop
-    animate()
+    animate();
 
     // Cleanup
     return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('keyup', onKeyUp)
-      window.removeEventListener('resize', onWindowResize)
-      mountRef.current?.removeChild(renderer.domElement)
-    }
-  }, [])
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("resize", onWindowResize);
+      mountRef.current?.removeChild(renderer.domElement);
+    };
+  }, []);
 
   return (
     <>
       <div ref={mountRef} />
       <SizeIndicator size={gameState.playerSize} />
       <audio ref={audioRef} />
+      <audio ref={blipSoundRef} />
     </>
-  )
-}
+  );
+};
 
-export default Game
+export default Game;
