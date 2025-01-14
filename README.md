@@ -4,6 +4,6 @@
 
 Katamini is a _work in progress, unfinished, barely playable_ [Katamari tribute](https://archive.org/details/KatamariFortissimoDamacy/) for the browser made with v0
 
-🎱 [PLAY NOW](https://lmangani.github.io/katamini/)
+[🎱⚾🏀 PLAY NOW 🎱⚾🏀](https://lmangani.github.io/katamini/)
 
 ![image](https://github.com/user-attachments/assets/2368e727-5640-47cd-878a-62e498c5af63)
