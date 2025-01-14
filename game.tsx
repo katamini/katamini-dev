@@ -50,7 +50,7 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
     const count =
       obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2;
     for (let i = 0; i < count; i++) {
-      const distance = Math.pow(obj.size, 1.2) * 0.5;
+      const distance = Math.pow(obj.size, 1.1) * 0.5;
       const angle = Math.random() * Math.PI * 2;
       distributed.push({
         ...obj,
@@ -110,7 +110,7 @@ const Game: React.FC = () => {
     audio.loop = true;
     audio.volume = 0.4;
     audioRef.current = audio;
-    blipSound.volume = 0.4;
+    blipSound.volume = 0.3;
     blipSoundRef.current = blipSound;
 
     const playAudio = () => {
