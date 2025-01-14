@@ -86,13 +86,20 @@ const Game: React.FC = () => {
     mountRef.current.appendChild(renderer.domElement)
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 2)
+    const ambientLight = new THREE.AmbientLight(0x404040, 1)
     scene.add(ambientLight)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-    directionalLight.position.set(10, 10, 10)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    directionalLight.position.set(10, 20, 10)
     directionalLight.castShadow = true
+    directionalLight.shadow.mapSize.width = 2048
+    directionalLight.shadow.mapSize.height = 2048
+    directionalLight.shadow.camera.near = 0.5
+    directionalLight.shadow.camera.far = 50
     scene.add(directionalLight)
 
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xFFCACC, 0.3)
+    scene.add(hemisphereLight)
+    
     // Room setup
     const roomGeometry = new THREE.BoxGeometry(50, 20, 50)
     const roomMaterial = new THREE.MeshStandardMaterial({ 
@@ -107,10 +114,12 @@ const Game: React.FC = () => {
     const floorGeometry = new THREE.PlaneGeometry(50, 50)
     const floorMaterial = new THREE.MeshStandardMaterial({ 
       color: 0xFFCACC,
-      roughness: 0.8 
+      roughness: 0.8,
+      side: THREE.DoubleSide
     })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
+    floor.position.y = 0.01 
     floor.receiveShadow = true
     scene.add(floor)
 
