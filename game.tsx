@@ -354,7 +354,7 @@ const Game: React.FC = () => {
       );
 
        // Add logic to check if all objects are captured and play a sound
-      if ((gameState.collectedObjects.length >= distributeObjects.length) && finished === false) {
+      if ((gameState.playerSize > 143) && finished === false) {
         console.log("Game Completed!", time);
         audioRef.current.pause();
         playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
