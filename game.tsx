@@ -85,6 +85,10 @@ const Game: React.FC = () => {
         console.log('Failed to play random sound:', error);
       });
     };
+  
+  function randoSeed(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
   // readystate
   useEffect(() => {
@@ -105,8 +109,8 @@ const Game: React.FC = () => {
 
   // music
   useEffect(() => {
-    const audio = new Audio("music/katamini_01.mp3");
-    const blipSound = new Audio("music/blips/01.mp3");
+    const audio = new Audio("music/katamini_0"+randoSeed(1,2)+".mp3");
+    const blipSound = new Audio("music/blips/0"+randoSeed(1,9)+".mp3");
     audio.loop = true;
     audio.volume = 0.4;
     audioRef.current = audio;
