@@ -2,7 +2,7 @@
 
 # katamini
 
-Katamini is a _work in progress, unfinished, barely playable_ Katamari tribute for the browser
+Katamini is a _work in progress, unfinished, barely playable_ [Katamari tribute](https://archive.org/details/KatamariFortissimoDamacy/) for the browser made with v0
 
 🎱 [PLAY NOW](https://lmangani.github.io/katamini/)
 
