@@ -13,7 +13,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <link rel="icon" type="image/png" href="https://i.imgur.com/UyA8YJC.png" />
+      <head>
+        <link rel="icon" type="image/png" href="https://i.imgur.com/UyA8YJC.png" />
+        <meta property="og:title" content="Katamini: The Game" />
+        <meta property="og:image" content="https://i.imgur.com/cBreCfD.gif" />
+      </head>
       <body>{children}</body>
     </html>
   )
