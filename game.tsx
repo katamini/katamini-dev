@@ -22,23 +22,23 @@ const gameObjects: GameObject[] = [
   
   // Tier 3 (5-10cm)
   { type: 'book', size: 5, model: 'models/books.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 0.25, color: '#795548', sound: 'music/blips/08.mp3' },
-  { type: 'duck', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 0.4, color: '#FF5722', sound: 'music/blips/07.mp3' },
+  { type: 'duck', size: 7, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 0.5, color: '#FF5722', sound: 'music/blips/07.mp3' },
   { type: 'car', size: 8.5, model: 'models/toy_car.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 0.5, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
   
   // Tier 4 (10-20cm)
   { type: 'pot', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
-  { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
-  { type: 'chair', size: 12, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 0.07, color: '#795548', sound: 'music/blips/02.mp3' },
+  // { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
+  // { type: 'chair', size: 12, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 0.07, color: '#795548', sound: 'music/blips/02.mp3' },
   
   // Tier 5 (20cm+)
-  // { type: 'table', size: 20, model: 'models/sofa.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 0.1, color: '#5D4037', sound: 'music/blips/03.mp3' },
+  { type: 'sofa', size: 20, model: 'models/sofa.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 0.1, color: '#5D4037', sound: 'music/blips/03.mp3' },
   // { type: 'desk', size: 25, model: 'models/piano.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 0.1, color: '#3E2723', sound: 'music/blips/04.mp3' },
 ];
 
 // Size tiers for controlled growth
 const sizeTiers = [
   { min: 0, max: 2, growthRate: 0.01 },
-  { min: 2, max: 5, growthRate: 0.04 },
+  { min: 2, max: 5, growthRate: 0.02 },
   { min: 5, max: 10, growthRate: 0.05 },
   { min: 10, max: 20, growthRate: 0.1 },
   { min: 20, max: Infinity, growthRate: 0.2 },
