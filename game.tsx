@@ -13,26 +13,26 @@ const gameObjects: GameObject[] = [
   // Tier 1 (0-2cm)
   { type: 'paperclip', size: 0.5, model: 'models/none.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
   { type: 'eraser', size: 1, model: 'models/none.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1', sound: 'music/blips/02.mp3' },
-  { type: 'coin', size: 2, model: 'models/none.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 1, color: '#FFD700', sound: 'music/blips/03.mp3' },
+  { type: 'coin', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 0.3, color: '#FFD700', round: true, sound: 'music/blips/03.mp3' },
   
   // Tier 2 (2-5cm)
-  { type: 'pencil', size: 2.5, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50', sound: 'music/blips/04.mp3' },
-  { type: 'spoon', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 1, color: '#9E9E9E', sound: 'music/blips/05.mp3' },
-  { type: 'toy_car', size: 4, model: 'models/coin.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3', sound: 'music/blips/06.mp3' },
+  { type: 'pencil', size: 2, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 0.5, color: '#4CAF50', round: true, sound: 'music/blips/04.mp3' },
+  { type: 'spoon', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 0.3, color: '#9E9E9E', round: false, sound: 'music/blips/05.mp3' },
+  { type: 'toy_car', size: 4.5, model: 'models/pencil.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1.5, color: '#2196F3', round: true, sound: 'music/blips/06.mp3' },
   
   // Tier 3 (5-10cm)
-  { type: 'mug', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 1, color: '#FF5722', sound: 'music/blips/07.mp3' },
-  { type: 'book', size: 8, model: 'models/pencil.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/08.mp3' },
-  { type: 'plate', size: 9, model: 'models/toy_car.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
+  { type: 'book', size: 5, model: 'models/books.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 0.25, color: '#795548', sound: 'music/blips/08.mp3' },
+  { type: 'mug', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 0.4, color: '#FF5722', sound: 'music/blips/07.mp3' },
+  { type: 'plate', size: 8.5, model: 'models/toy_car.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 0.5, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
   
   // Tier 4 (10-20cm)
-  { type: 'laptop', size: 12, model: 'models/laptop.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 1, color: '#9C27B0', sound: 'music/blips/10.mp3' },
-  { type: 'box', size: 15, model: 'models/box.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
-  { type: 'chair', size: 18, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/02.mp3' },
+  { type: 'laptop', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
+  { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
+  { type: 'chair', size: 18, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 0.07, color: '#795548', sound: 'music/blips/02.mp3' },
   
   // Tier 5 (20cm+)
-  { type: 'table', size: 25, model: 'models/table.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 1, color: '#5D4037', sound: 'music/blips/03.mp3' },
-  { type: 'desk', size: 30, model: 'models/desk.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 1, color: '#3E2723', sound: 'music/blips/04.mp3' },
+  { type: 'table', size: 25, model: 'models/none.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 1, color: '#5D4037', sound: 'music/blips/03.mp3' },
+  { type: 'desk', size: 30, model: 'models/piano.glb', position: [-7, 0, -7], rotation: [0, 0, 0], scale: 0.05, color: '#3E2723', sound: 'music/blips/04.mp3' },
 ];
 
 // Size tiers for controlled growth
@@ -40,9 +40,10 @@ const sizeTiers = [
   { min: 0, max: 2, growthRate: 0.05 },
   { min: 2, max: 5, growthRate: 0.04 },
   { min: 5, max: 10, growthRate: 0.03 },
-  { min: 10, max: 20, growthRate: 0.02 },
-  { min: 20, max: Infinity, growthRate: 0.01 },
+  { min: 10, max: 20, growthRate: 0.03 },
+  { min: 20, max: Infinity, growthRate: 0.05 },
 ];
+
 // Multiply objects for better distribution
 const distributeObjects = (objects: GameObject[]): GameObject[] => {
   const distributed: GameObject[] = [];
@@ -50,15 +51,14 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
     const count =
       obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2;
     for (let i = 0; i < count; i++) {
-      const distance = Math.pow(obj.size, 1) * 0.7;
+      const distance = Math.pow(obj.size, 1.05) * 0.5;
       const angle = Math.random() * Math.PI * 2;
       distributed.push({
         ...obj,
         position: [
-          Math.cos(angle) * distance,
-          obj.position[1],
-          Math.sin(angle) * distance,
+          Math.cos(angle) * distance, 0, Math.sin(angle) * distance,
         ],
+        rotation: obj.rotation, 
       });
     }
   });
@@ -174,8 +174,8 @@ const Game: React.FC = () => {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2548;
-    directionalLight.shadow.mapSize.height = 2548;
+    directionalLight.shadow.mapSize.width = 3000;
+    directionalLight.shadow.mapSize.height = 3000;
     directionalLight.shadow.camera.near = 0.5;
     directionalLight.shadow.camera.far = 50;
     scene.add(directionalLight);
@@ -240,91 +240,104 @@ const Game: React.FC = () => {
     let totalObjects = objects.length; 
 
     distributeObjects(gameObjects).forEach((obj) => {
-      loader.load(
-        obj.model,
-        (gltf) => {
-          const model = gltf.scene;
-          model.position.set(...obj.position);
+  loader.load(
+    obj.model,
+    (gltf) => {
+      const model = gltf.scene;
+      model.position.set(...obj.position);
+      model.rotation.set(...obj.rotation);
+      if (obj.round){
+        // Add random rotation
+        model.rotation.set(
+          obj.rotation[0],
+          obj.rotation[1] + Math.random() * Math.PI,
+          obj.rotation[2] + Math.random() * Math.PI
+        );
+        // adjust to the floor
+        model.position.y = 0.05;
+        
+      } else {
+         model.rotation.set(
+          0,
+          obj.rotation[2] + Math.random() * Math.PI,
+          0,
+        );
+        // Adjust position to be above the floor
+        model.position.y = 0.05;
+      }
+      // Apply the scale parameter
+      model.scale.setScalar(obj.scale);
+      model.userData.size = obj.size; // Set userData.size for interaction logic
 
-          // Add random rotation
-          model.rotation.set(
-            obj.rotation[0] + Math.random() * Math.PI,
-            obj.rotation[1] + Math.random() * Math.PI,
-            obj.rotation[2] + Math.random() * Math.PI
-          );
+      
 
-          model.scale.setScalar(obj.size * 0.1); // Respect the size
-          model.userData.size = obj.size; // Set userData.size for interaction logic
-
-          // Adjust position to be above the floor
-          model.position.y = obj.size * 0.05;
-
-          model.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-              (child as THREE.Mesh).castShadow = true;
-              (child as THREE.Mesh).receiveShadow = true;
-            }
-          });
-          scene.add(model);
-          objects.push(model);
-
-          // Create aura
-          const auraGeometry = new THREE.SphereGeometry(
-            obj.size * 0.15,
-            32,
-            32
-          );
-          const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
-          auraMesh.scale.multiplyScalar(1.2);
-          auraMesh.visible = false;
-          model.add(auraMesh);
-          auras.push(auraMesh);
-        },
-        undefined,
-        () => {
-          // If loading fails, create a default block
-          const geometry = new THREE.BoxGeometry(
-            obj.size * 0.1,
-            obj.size * 0.1,
-            obj.size * 0.1
-          );
-          const material = new THREE.MeshStandardMaterial({ color: obj.color });
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.position.set(...obj.position);
-          mesh.rotation.set(...obj.rotation);
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          mesh.userData.size = obj.size; // Set userData.size for interaction logic
-
-          // Adjust position to be above the floor
-          mesh.position.y = obj.size * 0.005;
-
-          scene.add(mesh);
-          objects.push(mesh);
-
-          // Create aura
-          const auraGeometry = new THREE.SphereGeometry(
-            obj.size * 0.06,
-            32,
-            32
-          );
-          const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
-          auraMesh.scale.multiplyScalar(1.2);
-          auraMesh.visible = false;
-          mesh.add(auraMesh);
-          auras.push(auraMesh);
+      model.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          (child as THREE.Mesh).castShadow = true;
+          (child as THREE.Mesh).receiveShadow = true;
         }
-      );
-    });
+      });
+      scene.add(model);
+      objects.push(model);
 
+      // Create aura
+      const auraGeometry = new THREE.SphereGeometry(
+        obj.size * 0.15,
+        32,
+        32
+      );
+      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
+      auraMesh.scale.multiplyScalar(1.2);
+      auraMesh.visible = false;
+      model.add(auraMesh);
+      auras.push(auraMesh);
+    },
+    undefined,
+    () => {
+      // If loading fails, create a default block
+      const geometry = new THREE.BoxGeometry(
+        obj.size * 0.1,
+        obj.size * 0.1,
+        obj.size * 0.1
+      );
+      const material = new THREE.MeshStandardMaterial({ color: obj.color });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...obj.position);
+      mesh.rotation.set(...obj.rotation);
+      mesh.scale.setScalar(obj.scale); // Apply the scale parameter
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData.size = obj.size; // Set userData.size for interaction logic
+
+      // Adjust position to be above the floor
+      mesh.position.y = obj.size * 0.005;
+
+      scene.add(mesh);
+      objects.push(mesh);
+
+      // Create aura
+      const auraGeometry = new THREE.SphereGeometry(
+        obj.size * 0.06,
+        32,
+        32
+      );
+      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
+      auraMesh.scale.multiplyScalar(1.2);
+      auraMesh.visible = false;
+      mesh.add(auraMesh);
+      auras.push(auraMesh);
+    }
+  );
+});
     // Player movement properties
     const playerVelocity = new THREE.Vector3();
     const playerDirection = new THREE.Vector3(0, 0, -1);
     const rotationSpeed = 0.02;
     const acceleration = 0.003;
-    const maxSpeed = 0.2;
+    const maxSpeed = 0.1;
     const friction = 0.99;
-    const bounceForce = 0.3;
+    const bounceForce = 0.4;
     const gravity = 0.01;
     const jumpForce = 0.2;
     let isGrounded = false;
@@ -508,7 +521,7 @@ const Game: React.FC = () => {
                       size: object.userData.size,
                       position: surfacePosition.toArray(),
                       rotation: [0, 0, 0],
-                      scale: scaleFactor,
+                      scale: object.scale * 0.8,
                       model: "",
                       color: "#ffffff",
                     },
@@ -579,7 +592,7 @@ const Game: React.FC = () => {
       player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
 
       // Rotate collected objects container
-      collectedObjectsContainer.rotation.y += 0.05;
+      collectedObjectsContainer.rotation.x += 0.05;
 
       // Update camera zoom based on player size
       const targetZoom = THREE.MathUtils.clamp(
@@ -655,7 +668,8 @@ const Game: React.FC = () => {
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
             <br/>
-            <button type="button" onClick={ refreshPage }><span>Play Again</span></button> 
+            <button type="button" onClick={ refreshPage }><span>Play Again</span></button><br/>
+            <img src="https://i.imgur.com/n1lfojs.gif"/>
           </div>
         </div>
       )}
@@ -668,4 +682,3 @@ const refreshPage = () => {
 };
 
 export default Game;
-
