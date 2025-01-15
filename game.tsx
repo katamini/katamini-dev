@@ -629,9 +629,9 @@ const Game: React.FC = () => {
     };
     window.addEventListener("resize", onWindowResize);
     
-    function refreshPage(){ 
+    const refreshPage = () => {
       window.location.reload(); 
-    }
+    };
 
     // Start the game loop
     animate();
