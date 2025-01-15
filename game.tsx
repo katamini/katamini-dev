@@ -379,8 +379,8 @@ const Game: React.FC = () => {
         { userData: { size: -Infinity } }
       );
 
-      // Add logic to check if all objects are captured or player size reaches 140cm
-      if ((totalObjects + objects.length === 0) && !finished) { // Updated game-over condition
+      // Add logic to check if all objects are captured
+      if ((totalObjects + objects.length === 0) && totalObjects != 0 && !finished) { 
         console.log("Game Completed!", time, gameState, objects.length);
         audioRef.current?.pause();
         playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
@@ -481,7 +481,7 @@ const Game: React.FC = () => {
                 (Math.random() - 0.5) * player.scale.x
               )
                 .normalize()
-                .multiplyScalar(player.scale.x * 0.5);
+                .multiplyScalar(player.scale.x * 0.9);
               object.position.copy(surfacePosition);
               // object.scale.multiplyScalar(1.5);
               collectedObjectsContainer.add(object);
