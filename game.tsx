@@ -65,6 +65,10 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
   return distributed;
 };
 
+function refreshPage(){ 
+    window.location.reload(); 
+}
+
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -489,6 +493,7 @@ const Game: React.FC = () => {
               // Scale the object to be more visible on the surface
               // const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
               object.scale.multiplyScalar(0.5);
+              object.aura.visible = false;
               
               collectedObjectsContainer.add(object);
               object.userData.orbitOffset = Math.random() * Math.PI * 2;
@@ -671,7 +676,7 @@ const Game: React.FC = () => {
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
             <br/>
-            <button onClick="window.location.reload();">Play Again</button>
+            <button onClick={ refreshPage }>Play Again</button>
           </div>
         </div>
       )}
