@@ -79,7 +79,7 @@ const Game: React.FC = () => {
     timeElapsed: 0,
   });
   const [userInteracted, setUserInteracted] = useState(false);
-  const [gameOver, setGameOver] = useState(false); // Moved gameOver state here
+  const [gameOver, setGameOver] = useState(false);
   const loader = new GLTFLoader();
 
   const playRandomSound = (sounds: string[]) => {
@@ -219,7 +219,7 @@ const Game: React.FC = () => {
     });
     const player = new THREE.Mesh(playerGeometry, playerMaterial);
     player.position.y = 0.25; // Start closer to the ground
-    player.scale.setScalar(0.5); // Initial size
+    player.scale.setScalar(0.25); // Initial size
     player.castShadow = true;
     player.receiveShadow = true;
     scene.add(player);
@@ -241,7 +241,7 @@ const Game: React.FC = () => {
     // Load game objects
     const objects: THREE.Object3D[] = [];
     const auras: THREE.Mesh[] = [];
-    let totalObjects = objects.length; // Added to track total objects
+    let totalObjects = objects.length; 
 
     distributeObjects(gameObjects).forEach((obj) => {
       loader.load(
@@ -334,8 +334,8 @@ const Game: React.FC = () => {
     let isGrounded = false;
 
     // Camera setup
-    const cameraOffset = new THREE.Vector3(0, 2, 5);
-    const minZoom = 5;
+    const cameraOffset = new THREE.Vector3(0, 1, 2.5);
+    const minZoom = 2.5;
     const maxZoom = 100; 
     let currentZoom = minZoom; 
     camera.position.copy(player.position).add(cameraOffset);
@@ -343,20 +343,19 @@ const Game: React.FC = () => {
 
     let finished = false;
     let startTime = Date.now();
-    // const [gameOver, setGameOver] = useState(false); // Removed gameOver state from here
 
     // Game loop
     let time = 0;
     const animate = () => {
+      if (finished) return; // Stop animation when game is over
+
       requestAnimationFrame(animate);
       time += 0.016;
 
       // Update time elapsed
-      if (!finished){
-        const currentTime = Date.now();
-        const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-        setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
-      }
+      const currentTime = Date.now();
+      const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+      setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
 
       // Find the smallest remaining object
       const smallestObject = objects.reduce(
@@ -370,19 +369,6 @@ const Game: React.FC = () => {
           return smallest;
         },
         { userData: { size: Infinity } }
-      );
-      // Find the largest remaining object
-      const largestObject = objects.reduce(
-        (largest, obj) => {
-          if (
-            obj.parent === scene &&
-            obj.userData.size > largest.userData.size
-          ) {
-            return obj;
-          }
-          return largest;
-        },
-        { userData: { size: -Infinity } }
       );
 
       // Add logic to check if all objects are captured
@@ -493,7 +479,6 @@ const Game: React.FC = () => {
               // Scale the object to be more visible on the surface
               const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
               object.scale.multiplyScalar(scaleFactor);
-              object.aura.visible = false;
               
               collectedObjectsContainer.add(object);
               object.userData.orbitOffset = Math.random() * Math.PI * 2;
@@ -511,9 +496,9 @@ const Game: React.FC = () => {
                   (tier) =>
                     prev.playerSize >= tier.min && prev.playerSize < tier.max
                 );
-                const growthRate = currentTier ? currentTier.growthRate : 0.2;
+                const growthRate = currentTier ? currentTier.growthRate : 0.01;
                 const newPlayerSize =
-                  prev.playerSize + object.userData.size * growthRate;
+                  prev.playerSize + (object.userData.size * growthRate);
 
                 return {
                   ...prev,
@@ -525,7 +510,7 @@ const Game: React.FC = () => {
                       size: object.userData.size,
                       position: surfacePosition.toArray(),
                       rotation: [0, 0, 0],
-                      scale: 1,
+                      scale: scaleFactor,
                       model: "",
                       color: "#ffffff",
                     },
@@ -537,7 +522,7 @@ const Game: React.FC = () => {
               const targetScale = gameState.playerSize;
               player.scale.lerp(
                 new THREE.Vector3(targetScale, targetScale, targetScale),
-                0.2
+                0.1
               );
 
               // Adjust collected objects
@@ -563,7 +548,7 @@ const Game: React.FC = () => {
                 }
               );
 
-              cameraOffset.z = Math.max(5, player.scale.x * 4);
+              cameraOffset.z = Math.max(2.5, player.scale.x * 3);
             } else {
               // Bounce off larger objects
               collisionOccurred = true;
@@ -600,7 +585,7 @@ const Game: React.FC = () => {
 
       // Update camera zoom based on player size
       const targetZoom = THREE.MathUtils.clamp(
-        player.scale.x * 1,
+        player.scale.x * 3,
         minZoom,
         maxZoom
       );
@@ -629,7 +614,7 @@ const Game: React.FC = () => {
       }
       if (event.code === "Escape") {
         event.preventDefault(); // Prevent page scrolling
-        console.log('DEBUG:',totalObjects, objects.length, totalObjects + objects.length);
+        console.log('DEBUG:', totalObjects, objects.length);
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
@@ -664,7 +649,7 @@ const Game: React.FC = () => {
       <SizeIndicator size={gameState.playerSize} time={gameState.timeElapsed} />
       <audio ref={audioRef} />
       <audio ref={blipSoundRef} />
-      {gameOver && ( // Only show congratulations message when gameOver is true
+      {gameOver && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
           <div className="bg-white p-8 rounded-lg text-center">
             <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
@@ -675,8 +660,6 @@ const Game: React.FC = () => {
             <p className="text-lg">
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
-            <br/>
-            <button onClick={ refreshPage }>Play Again</button>
           </div>
         </div>
       )}
