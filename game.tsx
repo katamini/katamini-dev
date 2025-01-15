@@ -539,22 +539,19 @@ const Game: React.FC = () => {
               collectedObjectsContainer.children.forEach(
                 (child: THREE.Object3D) => {
                   const childSize = child.userData.size;
-                  const scaleFactor = Math.min(
-                    1,
-                    (gameState.playerSize * 0.2) / childSize
-                  );
-                  child.scale.setScalar(scaleFactor);
+                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
+                  child.scale.setScalar(childScaleFactor);
 
                   // Remove objects that are too small to see
-                  if (scaleFactor < 0.05) {
+                  if (childScaleFactor < 0.25) {
                     collectedObjectsContainer.remove(child);
                   } else {
                     // Adjust position to orbit around the growing ball
-                    const orbitRadius = player.scale.x * 0.7;
+                    const orbitRadius = player.scale.x * 0.5;
                     const angle = time * 0.5 + child.userData.orbitOffset;
                     child.position.set(
                       Math.cos(angle) * orbitRadius,
-                      Math.sin(angle * 0.7) * orbitRadius * 0.5,
+                      Math.sin(angle * 0.5) * orbitRadius * 0.5,
                       Math.sin(angle) * orbitRadius
                     );
                   }
@@ -673,6 +670,8 @@ const Game: React.FC = () => {
             <p className="text-lg">
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
+            <br/>
+            <button onClick="window.location.reload();">Play Again</button>
           </div>
         </div>
       )}
