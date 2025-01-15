@@ -544,19 +544,19 @@ const Game: React.FC = () => {
               collectedObjectsContainer.children.forEach(
                 (child: THREE.Object3D) => {
                   const childSize = child.userData.size;
-                  // const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
-                  child.scale.setScalar(0.8);
+                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
+                  child.scale.setScalar(childScaleFactor);
 
                   // Remove objects that are too small to see
                   if (childScaleFactor < 0.05) {
                     collectedObjectsContainer.remove(child);
                   } else {
                     // Adjust position to orbit around the growing ball
-                    const orbitRadius = player.scale.x * 0.5;
+                    const orbitRadius = player.scale.x * 0.7;
                     const angle = time * 0.5 + child.userData.orbitOffset;
                     child.position.set(
                       Math.cos(angle) * orbitRadius,
-                      Math.sin(angle * 0.5) * orbitRadius * 0.5,
+                      Math.sin(angle * 0.7) * orbitRadius * 0.5,
                       Math.sin(angle) * orbitRadius
                     );
                   }
