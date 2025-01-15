@@ -539,8 +539,8 @@ const Game: React.FC = () => {
               collectedObjectsContainer.children.forEach(
                 (child: THREE.Object3D) => {
                   const childSize = child.userData.size;
-                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
-                  child.scale.setScalar(childScaleFactor);
+                  // const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
+                  child.scale.setScalar(0.5);
 
                   // Remove objects that are too small to see
                   if (childScaleFactor < 0.25) {
