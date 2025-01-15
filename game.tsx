@@ -610,10 +610,6 @@ const Game: React.FC = () => {
       if (event.code === "Space") {
         event.preventDefault(); // Prevent page scrolling
       }
-      if (event.code === "Escape") {
-        event.preventDefault(); // Prevent page scrolling
-        console.log('DEBUG:', totalObjects, objects.length);
-      }
     };
     const onKeyUp = (event: KeyboardEvent) => {
       keys[event.code] = false;
@@ -628,10 +624,6 @@ const Game: React.FC = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", onWindowResize);
-    
-    const refreshPage = () => {
-      window.location.reload(); 
-    };
 
     // Start the game loop
     animate();
@@ -662,13 +654,17 @@ const Game: React.FC = () => {
             <p className="text-lg">
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
-            <br>
-            <button type="button" onClick={ refreshPage }> <span>Play Again</span> </button> 
+            <br/>
+            <button type="button" onClick={ refreshPage }><span>Play Again</span></button> 
           </div>
         </div>
       )}
     </>
   );
+};
+
+const refreshPage = () => {
+   window.location.reload(); 
 };
 
 export default Game;
