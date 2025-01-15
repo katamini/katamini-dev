@@ -475,6 +475,7 @@ const Game: React.FC = () => {
                 .normalize()
                 .multiplyScalar(player.scale.x * 0.5);
               object.position.copy(surfacePosition);
+              object.aura.visible = false;
               
               // Scale the object to be more visible on the surface
               const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
@@ -529,11 +530,11 @@ const Game: React.FC = () => {
               collectedObjectsContainer.children.forEach(
                 (child: THREE.Object3D) => {
                   const childSize = child.userData.size;
-                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
+                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize / 2);
                   child.scale.setScalar(childScaleFactor);
 
                   // Remove objects that are too small to see
-                  if (childScaleFactor < 0.05) {
+                  if (childScaleFactor < 0.05 || childScaleFactor > (gameState.playerSize * 1.2) ) {
                     collectedObjectsContainer.remove(child);
                   } else {
                     // Adjust position to orbit around the growing ball
