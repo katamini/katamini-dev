@@ -371,6 +371,7 @@ const Game: React.FC = () => {
       if ((totalObjects + objects.length === 0) && totalObjects != 0 && !finished) { 
         console.log("Game Completed!", time, gameState, objects.length);
         audioRef.current?.pause();
+        audioRef.current = null;
         playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
         finished = true;
         setGameOver(true);
@@ -627,6 +628,10 @@ const Game: React.FC = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", onWindowResize);
+    
+    function refreshPage(){ 
+      window.location.reload(); 
+    }
 
     // Start the game loop
     animate();
@@ -657,6 +662,8 @@ const Game: React.FC = () => {
             <p className="text-lg">
               Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
             </p>
+            <br>
+            <button type="button" onClick={ refreshPage }> <span>Play Again</span> </button> 
           </div>
         </div>
       )}
