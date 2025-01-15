@@ -472,7 +472,7 @@ const Game: React.FC = () => {
                 .normalize()
                 .multiplyScalar(player.scale.x * 0.5);
               object.position.copy(surfacePosition);
-              object.aura.visible = false;
+              // object.aura.visible = false;
               
               // Scale the object to be more visible on the surface
               const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
