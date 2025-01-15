@@ -16,7 +16,7 @@ const gameObjects: GameObject[] = [
   { type: 'coin', size: 2, model: 'models/none.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 1, color: '#FFD700', sound: 'music/blips/03.mp3' },
   
   // Tier 2 (2-5cm)
-  { type: 'pencil', size: 2.5, model: 'models/duck.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50', sound: 'music/blips/04.mp3' },
+  { type: 'pencil', size: 2.5, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50', sound: 'music/blips/04.mp3' },
   { type: 'spoon', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 1, color: '#9E9E9E', sound: 'music/blips/05.mp3' },
   { type: 'toy_car', size: 5, model: 'models/coin.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3', sound: 'music/blips/06.mp3' },
   
@@ -75,6 +75,7 @@ const Game: React.FC = () => {
     timeElapsed: 0,
   });
   const [userInteracted, setUserInteracted] = useState(false);
+  const [gameOver, setGameOver] = useState(false); // Moved gameOver state here
   const loader = new GLTFLoader();
 
   const playRandomSound = (sounds: string[]) => {
@@ -236,6 +237,7 @@ const Game: React.FC = () => {
     // Load game objects
     const objects: THREE.Object3D[] = [];
     const auras: THREE.Mesh[] = [];
+    let totalObjects = objects.length; // Added to track total objects
 
     distributeObjects(gameObjects).forEach((obj) => {
       loader.load(
@@ -336,12 +338,19 @@ const Game: React.FC = () => {
     camera.lookAt(player.position);
 
     let finished = false;
+    let startTime = Date.now();
+    // const [gameOver, setGameOver] = useState(false); // Removed gameOver state from here
 
     // Game loop
     let time = 0;
     const animate = () => {
       requestAnimationFrame(animate);
       time += 0.016;
+
+      // Update time elapsed
+      const currentTime = Date.now();
+      const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+      setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
 
       // Find the smallest remaining object
       const smallestObject = objects.reduce(
@@ -367,17 +376,18 @@ const Game: React.FC = () => {
           }
           return largest;
         },
-        { userData: { size: Infinity } }
+        { userData: { size: -Infinity } }
       );
 
-       // Add logic to check if all objects are captured and play a sound
-      if ((gameState.playerSize * 1.2 >= largestObject.userData.size) && finished === false) {
-        console.log("Game Completed!", time);
-        audioRef.current.pause();
+      // Add logic to check if all objects are captured or player size reaches 140cm
+      if ((totalObjects + objects.length === 0) && !finished) { // Updated game-over condition
+        console.log("Game Completed!", time, gameState, objects.length);
+        audioRef.current?.pause();
         playRandomSound(['music/effects/01.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
         finished = true;
+        setGameOver(true);
       }
-  
+
       // Update aura uniforms and visibility
       objects.forEach((object, index) => {
         if (object.parent === scene) {
@@ -462,6 +472,7 @@ const Game: React.FC = () => {
             ) {
               // Collect object
               scene.remove(object);
+              totalObjects--; // Decrement total objects count
 
               // Add to collected objects with position on the surface of the ball
               const surfacePosition = new THREE.Vector3(
@@ -608,6 +619,10 @@ const Game: React.FC = () => {
       if (event.code === "Space") {
         event.preventDefault(); // Prevent page scrolling
       }
+      if (event.code === "Escape") {
+        event.preventDefault(); // Prevent page scrolling
+        console.log('DEBUG:',totalObjects, objects.length, totalObjects + objects.length);
+      }
     };
     const onKeyUp = (event: KeyboardEvent) => {
       keys[event.code] = false;
@@ -638,11 +653,26 @@ const Game: React.FC = () => {
   return (
     <>
       <div ref={mountRef} />
-      <SizeIndicator size={gameState.playerSize} />
+      <SizeIndicator size={gameState.playerSize} time={gameState.timeElapsed} />
       <audio ref={audioRef} />
       <audio ref={blipSoundRef} />
+      {gameOver && ( // Only show congratulations message when gameOver is true
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
+          <div className="bg-white p-8 rounded-lg text-center">
+            <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
+            <p className="text-xl mb-2">You've captured all the objects!</p>
+            <p className="text-lg">
+              Final size: {Math.floor(gameState.playerSize)}cm {Math.floor((gameState.playerSize % 1) * 10)}mm
+            </p>
+            <p className="text-lg">
+              Time: {Math.floor(gameState.timeElapsed / 60)}m {gameState.timeElapsed % 60}s
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
 export default Game;
+
