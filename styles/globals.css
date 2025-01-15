@@ -6,6 +6,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html, body, #app, #app>div {
+  height: 100%;
+  width: 100%;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
