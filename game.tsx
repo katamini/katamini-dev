@@ -13,20 +13,20 @@ const gameObjects: GameObject[] = [
   // Tier 1 (0-2cm)
   { type: 'paperclip', size: 0.5, model: 'models/none.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
   { type: 'eraser', size: 1, model: 'models/none.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1', sound: 'music/blips/02.mp3' },
-  { type: 'coin', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 0.3, color: '#FFD700', round: true, sound: 'music/blips/03.mp3' },
+  { type: 'coin1', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 0.3, color: '#FFD700', round: true, sound: 'music/blips/03.mp3' },
   
   // Tier 2 (2-5cm)
-  { type: 'pencil', size: 2, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 0.5, color: '#4CAF50', round: true, sound: 'music/blips/04.mp3' },
-  { type: 'spoon', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 0.3, color: '#9E9E9E', round: false, sound: 'music/blips/05.mp3' },
-  { type: 'toy_car', size: 4.5, model: 'models/pencil.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1.5, color: '#2196F3', round: true, sound: 'music/blips/06.mp3' },
+  { type: 'coin2', size: 2, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 0.5, color: '#4CAF50', round: true, sound: 'music/blips/04.mp3' },
+  { type: 'eraser', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 0.3, color: '#9E9E9E', round: false, sound: 'music/blips/05.mp3' },
+  //{ type: 'pencil', size: 3, model: 'models/pencil.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1.5, color: '#2196F3', round: false, sound: 'music/blips/06.mp3' },
   
   // Tier 3 (5-10cm)
   { type: 'book', size: 5, model: 'models/books.glb', position: [-4, 0, -4], rotation: [0, 0, 0], scale: 0.25, color: '#795548', sound: 'music/blips/08.mp3' },
-  { type: 'mug', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 0.4, color: '#FF5722', sound: 'music/blips/07.mp3' },
-  { type: 'plate', size: 8.5, model: 'models/toy_car.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 0.5, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
+  { type: 'duck', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 0.4, color: '#FF5722', sound: 'music/blips/07.mp3' },
+  { type: 'car', size: 8.5, model: 'models/toy_car.glb', position: [5, 0, 2], rotation: [0, 0, 0], scale: 0.5, color: '#E0E0E0', sound: 'music/blips/09.mp3' },
   
   // Tier 4 (10-20cm)
-  { type: 'laptop', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
+  { type: 'pot', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
   { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
   { type: 'chair', size: 12, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 0.07, color: '#795548', sound: 'music/blips/02.mp3' },
   
@@ -37,11 +37,11 @@ const gameObjects: GameObject[] = [
 
 // Size tiers for controlled growth
 const sizeTiers = [
-  { min: 0, max: 2, growthRate: 0.03 },
+  { min: 0, max: 2, growthRate: 0.01 },
   { min: 2, max: 5, growthRate: 0.04 },
   { min: 5, max: 10, growthRate: 0.05 },
-  { min: 10, max: 20, growthRate: 0.06 },
-  { min: 20, max: Infinity, growthRate: 0.1 },
+  { min: 10, max: 20, growthRate: 0.1 },
+  { min: 20, max: Infinity, growthRate: 0.2 },
 ];
 
 // Multiply objects for better distribution
@@ -51,7 +51,7 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
     const count =
       obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2;
     for (let i = 0; i < count; i++) {
-      const distance = Math.pow(obj.size, 1.05) * 0.5;
+      const distance = Math.pow(obj.size, 1.05) * 0.6;
       const angle = Math.random() * Math.PI * 2;
       distributed.push({
         ...obj,
