@@ -491,8 +491,8 @@ const Game: React.FC = () => {
               object.position.copy(surfacePosition);
               
               // Scale the object to be more visible on the surface
-              // const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
-              object.scale.multiplyScalar(0.5);
+              const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
+              object.scale.multiplyScalar(scaleFactor);
               object.aura.visible = false;
               
               collectedObjectsContainer.add(object);
