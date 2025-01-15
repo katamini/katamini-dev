@@ -483,9 +483,13 @@ const Game: React.FC = () => {
                 (Math.random() - 0.5) * player.scale.x
               )
                 .normalize()
-                .multiplyScalar(player.scale.x * 0.9);
+                .multiplyScalar(player.scale.x * 0.5);
               object.position.copy(surfacePosition);
-              // object.scale.multiplyScalar(1.5);
+              
+              // Scale the object to be more visible on the surface
+              // const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
+              object.scale.multiplyScalar(0.5);
+              
               collectedObjectsContainer.add(object);
               object.userData.orbitOffset = Math.random() * Math.PI * 2;
 
