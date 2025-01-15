@@ -18,7 +18,7 @@ const gameObjects: GameObject[] = [
   // Tier 2 (2-5cm)
   { type: 'pencil', size: 2.5, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 1, color: '#4CAF50', sound: 'music/blips/04.mp3' },
   { type: 'spoon', size: 3, model: 'models/eraser.glb', position: [3, 0, 3], rotation: [0, 0, 0], scale: 1, color: '#9E9E9E', sound: 'music/blips/05.mp3' },
-  { type: 'toy_car', size: 5, model: 'models/coin.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3', sound: 'music/blips/06.mp3' },
+  { type: 'toy_car', size: 4, model: 'models/coin.glb', position: [-3, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#2196F3', sound: 'music/blips/06.mp3' },
   
   // Tier 3 (5-10cm)
   { type: 'mug', size: 6, model: 'models/duck.glb', position: [4, 0, -3], rotation: [0, 0, 0], scale: 1, color: '#FF5722', sound: 'music/blips/07.mp3' },
@@ -37,11 +37,11 @@ const gameObjects: GameObject[] = [
 
 // Size tiers for controlled growth
 const sizeTiers = [
-  { min: 0, max: 2, growthRate: 0.3 },
-  { min: 2, max: 5, growthRate: 0.25 },
-  { min: 5, max: 10, growthRate: 0.25 },
-  { min: 10, max: 20, growthRate: 0.25 },
-  { min: 20, max: Infinity, growthRate: 0.15 },
+  { min: 0, max: 2, growthRate: 0.05 },
+  { min: 2, max: 5, growthRate: 0.04 },
+  { min: 5, max: 10, growthRate: 0.03 },
+  { min: 10, max: 20, growthRate: 0.02 },
+  { min: 20, max: Infinity, growthRate: 0.01 },
 ];
 // Multiply objects for better distribution
 const distributeObjects = (objects: GameObject[]): GameObject[] => {
@@ -64,10 +64,6 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
   });
   return distributed;
 };
-
-function refreshPage(){ 
-    window.location.reload(); 
-}
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -475,11 +471,10 @@ const Game: React.FC = () => {
                 .normalize()
                 .multiplyScalar(player.scale.x * 0.5);
               object.position.copy(surfacePosition);
-              object.aura.visible = false;
               
               // Scale the object to be more visible on the surface
               const scaleFactor = Math.max(0.1, object.userData.size / gameState.playerSize);
-              object.scale.multiplyScalar(scaleFactor);
+              object.scale.multiplyScalar(0.6); // scaleFactor
               
               collectedObjectsContainer.add(object);
               object.userData.orbitOffset = Math.random() * Math.PI * 2;
@@ -530,8 +525,8 @@ const Game: React.FC = () => {
               collectedObjectsContainer.children.forEach(
                 (child: THREE.Object3D) => {
                   const childSize = child.userData.size;
-                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize * 0.8);
-                  child.scale.setScalar(childScaleFactor);
+                  const childScaleFactor = Math.max(0.1, childSize / gameState.playerSize);
+                  child.scale.setScalar(0.5);
 
                   // Remove objects that are too small to see
                   if (childScaleFactor < 0.05) {
