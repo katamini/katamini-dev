@@ -27,8 +27,8 @@ const gameObjects: GameObject[] = [
   
   // Tier 4 (10-20cm)
   { type: 'pot', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
-  { type: 'chair', size: 15, model: 'models/chair.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 0.05, color: '#8D6E63', sound: 'music/blips/01.mp3' },
-  { type: 'trashcan', size: 12, model: 'models/trashcan.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/02.mp3' },
+  { type: 'chair', size: 13, model: 'models/chair.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 0.06, color: '#8D6E63', sound: 'music/blips/01.mp3' },
+  { type: 'trashcan', size: 14, model: 'models/trashcan.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 1, color: '#795548', sound: 'music/blips/02.mp3' },
   
   // Tier 5 (20cm+)
   { type: 'sofa', size: 20, model: 'models/sofa.glb', position: [7, 0, 7], rotation: [0, 0, 0], scale: 0.1, color: '#5D4037', sound: 'music/blips/03.mp3' },
