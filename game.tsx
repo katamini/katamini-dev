@@ -76,6 +76,8 @@ const Game: React.FC = () => {
   });
   const [userInteracted, setUserInteracted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [floorScale, setFloorScale] = useState(1);
+
   const loader = new GLTFLoader();
 
   const playRandomSound = (sounds: string[]) => {
@@ -194,12 +196,19 @@ const Game: React.FC = () => {
     scene.add(room);
 
     // Floor
-    const floorGeometry = new THREE.PlaneGeometry(50, 50);
+    const floorTexture = new THREE.TextureLoader().load('textures/floor_carpet.jpg');
+    floorTexture.wrapS = THREE.RepeatWrapping;
+    floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(50, 50); // Adjust the repeat values as needed
+
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffcacc,
-      roughness: 0.8,
+      map: floorTexture,
+      roughness: 1.0,  // Non-reflective
+      metalness: 0.0,  // Non-reflective
       side: THREE.DoubleSide,
     });
+
+    const floorGeometry = new THREE.PlaneGeometry(50, 50);
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.01;
@@ -328,7 +337,7 @@ const Game: React.FC = () => {
     const playerDirection = new THREE.Vector3(0, 0, -1);
     const rotationSpeed = 0.03;
     const acceleration = 0.003;
-    const maxSpeed = 0.1;
+    const maxSpeed = 0.3;
     const friction = 0.9;
     const bounceForce = 0.4;
     const gravity = 0.01;
@@ -531,7 +540,7 @@ const Game: React.FC = () => {
               });
 
               // Adjust player size
-              const targetScale = newPlayerSize; //gameState.playerSize;
+              const targetScale = gameState.playerSize * 1.1;
               player.scale.lerp(
                 new THREE.Vector3(targetScale, targetScale, targetScale),
                 0.2
