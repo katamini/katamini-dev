@@ -433,9 +433,14 @@ const Game: React.FC = () => {
         );
       }
 
+      // Apply friction and limit speed
       playerVelocity.multiplyScalar(friction);
-      if (playerVelocity.length() > maxSpeed) {
-        playerVelocity.normalize().multiplyScalar(maxSpeed);
+      
+      // Adjust maxSpeed based on player size
+      const dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.1);
+      
+      if (playerVelocity.length() > dynamicMaxSpeed) {
+        playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
       }
 
       const nextPosition = player.position.clone().add(playerVelocity);
