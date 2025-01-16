@@ -539,13 +539,23 @@ const Game: React.FC = () => {
                   if (child.userData.size < gameState.playerSize * 0.08) {
                     collectedObjectsContainer.remove(child);
                   } else {
-                    // Adjust position to orbit around the growing ball
-                    const orbitRadius = player.scale.x * 0.7;
-                    const angle = time * 0.5 + child.userData.orbitOffset;
+                    // Preserve spherical distribution while rotating
+                    const currentPos = child.position.clone();
+                    const radius = player.scale.x * 0.7;
+                    
+                    // Calculate current spherical coordinates
+                    const currentRadius = currentPos.length();
+                    let theta = Math.acos(currentPos.y / currentRadius);
+                    let phi = Math.atan2(currentPos.z, currentPos.x);
+                    
+                    // Rotate around the sphere
+                    phi += time * 0.2 + child.userData.orbitOffset;
+                    
+                    // Convert back to Cartesian coordinates
                     child.position.set(
-                      Math.cos(angle) * orbitRadius,
-                      Math.sin(angle * 0.7) * orbitRadius * 0.5,
-                      Math.sin(angle) * orbitRadius
+                      radius * Math.sin(theta) * Math.cos(phi),
+                      radius * Math.sin(theta) * Math.sin(phi),
+                      radius * Math.cos(theta)
                     );
                   }
                 }
