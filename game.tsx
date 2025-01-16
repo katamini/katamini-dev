@@ -437,7 +437,7 @@ const Game: React.FC = () => {
       playerVelocity.multiplyScalar(friction);
       
       // Adjust maxSpeed based on player size
-      const dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.1);
+      const dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.2);
       
       if (playerVelocity.length() > dynamicMaxSpeed) {
         playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
@@ -508,7 +508,7 @@ const Game: React.FC = () => {
                   (tier) =>
                     prev.playerSize >= tier.min && prev.playerSize < tier.max
                 );
-                const growthRate = currentTier ? currentTier.growthRate : 0.01;
+                const growthRate = currentTier ? currentTier.growthRate : 0.02;
                 const newPlayerSize =
                   prev.playerSize + (object.userData.size * growthRate);
 
@@ -531,10 +531,10 @@ const Game: React.FC = () => {
               });
 
               // Adjust player size
-              const targetScale = gameState.playerSize;
+              const targetScale = newPlayerSize; //gameState.playerSize;
               player.scale.lerp(
                 new THREE.Vector3(targetScale, targetScale, targetScale),
-                0.1
+                0.2
               );
 
               // Adjust collected objects
@@ -554,7 +554,7 @@ const Game: React.FC = () => {
                     let phi = Math.atan2(currentPos.z, currentPos.x);
                     
                     // Rotate around the sphere
-                    phi += time * 0.2 + child.userData.orbitOffset;
+                    phi += time * 0.3 + child.userData.orbitOffset;
                     
                     // Convert back to Cartesian coordinates
                     child.position.set(
