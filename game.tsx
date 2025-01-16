@@ -110,7 +110,7 @@ const Game: React.FC = () => {
 
   // music
   useEffect(() => {
-    const audio = new Audio("music/katamini_0"+randoSeed(1,3)+".mp3");
+    const audio = new Audio("music/katamini_0"+randoSeed(1,4)+".mp3");
     const blipSound = new Audio("music/blips/0"+randoSeed(1,9)+".mp3");
     audio.loop = true;
     audio.volume = 0.4;
