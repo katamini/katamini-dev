@@ -360,16 +360,17 @@ const Game: React.FC = () => {
     // Game loop
     let time = 0;
     const animate = () => {
-      if (finished || gamePaused) return; // Stop animation when game is over
+      if (finished) return; // Stop animation when game is over
 
       requestAnimationFrame(animate);
-      time += 0.016;
-
-      // Update time elapsed
-      const currentTime = Date.now();
-      const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-      setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
-
+      if (!gamePaused) { 
+        time += 0.016; 
+        // Update time elapsed
+        const currentTime = Date.now();
+        const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+        setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
+      }
+      
       // Find the smallest remaining object
       const smallestObject = objects.reduce(
         (smallest, obj) => {
