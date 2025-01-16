@@ -13,7 +13,7 @@ const gameObjects: GameObject[] = [
   // Tier 1 (0-2cm)
   { type: 'paperclip', size: 0.5, model: 'models/none.glb', position: [1, 0, 1], rotation: [0, 0, 0], scale: 1, color: '#A1A1A1', sound: 'music/blips/01.mp3' },
   { type: 'eraser', size: 1, model: 'models/none.glb', position: [-1, 0, 2], rotation: [0, 0, 0], scale: 1, color: '#F48FB1', sound: 'music/blips/02.mp3' },
-  { type: 'coin1', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 0.3, color: '#FFD700', round: true, sound: 'music/blips/03.mp3' },
+  { type: 'coin1', size: 2, model: 'models/coin.glb', position: [2, 0, -1], rotation: [0, 0, 0], scale: 0.4, color: '#FFD700', round: true, sound: 'music/blips/03.mp3' },
   
   // Tier 2 (2-5cm)
   { type: 'coin2', size: 2, model: 'models/coin.glb', position: [-2, 0, -2], rotation: [0, 0, 0], scale: 0.5, color: '#4CAF50', round: true, sound: 'music/blips/04.mp3' },
@@ -27,7 +27,7 @@ const gameObjects: GameObject[] = [
   
   // Tier 4 (10-20cm)
   { type: 'pot', size: 12, model: 'models/flowerpot.glb', position: [-5, 0, 5], rotation: [0, 0, 0], scale: 0.4, color: '#9C27B0', sound: 'music/blips/10.mp3' },
-  // { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
+  { type: 'box', size: 15, model: 'models/none.glb', position: [6, 0, -5], rotation: [0, 0, 0], scale: 1, color: '#8D6E63', sound: 'music/blips/01.mp3' },
   // { type: 'chair', size: 12, model: 'models/chair.glb', position: [-6, 0, -6], rotation: [0, 0, 0], scale: 0.07, color: '#795548', sound: 'music/blips/02.mp3' },
   
   // Tier 5 (20cm+)
@@ -51,7 +51,7 @@ const distributeObjects = (objects: GameObject[]): GameObject[] => {
     const count =
       obj.size < 5 ? 20 : obj.size < 10 ? 12 : obj.size < 20 ? 6 : 2;
     for (let i = 0; i < count; i++) {
-      const distance = Math.pow(obj.size, 1.05) * 0.6;
+      const distance = Math.pow(obj.size, 1.05) * 0.7;
       const angle = Math.random() * Math.PI * 2;
       distributed.push({
         ...obj,
@@ -76,6 +76,7 @@ const Game: React.FC = () => {
   });
   const [userInteracted, setUserInteracted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [gamePaused, setGamePaused] = useState(true);
   const loader = new GLTFLoader();
 
   const playRandomSound = (sounds: string[]) => {
@@ -95,6 +96,7 @@ const Game: React.FC = () => {
   useEffect(() => {
     const handleUserInteraction = () => {
       setUserInteracted(true);
+      setGamePaused(false);
       window.removeEventListener("click", handleUserInteraction);
       window.removeEventListener("keydown", handleUserInteraction);
     };
@@ -133,9 +135,11 @@ const Game: React.FC = () => {
       if (document.visibilityState === "visible" && userInteracted) {
         playRandomSound(['music/effects/01.mp3', 'music/effects/02.mp3', 'music/effects/03.mp3', 'music/effects/04.mp3', 'music/effects/05.mp3']);
         playAudio();
+        setGamePaused(false);
       } else {
         playRandomSound(['music/effects/02.mp3']);
         audio.pause();
+        setGamePaused(true);
       }
     };
 
@@ -356,7 +360,7 @@ const Game: React.FC = () => {
     // Game loop
     let time = 0;
     const animate = () => {
-      if (finished) return; // Stop animation when game is over
+      if (finished || gamePaused) return; // Stop animation when game is over
 
       requestAnimationFrame(animate);
       time += 0.016;
@@ -648,7 +652,7 @@ const Game: React.FC = () => {
       window.removeEventListener("resize", onWindowResize);
       mountRef.current?.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [gamePaused]);
 
   return (
     <>
