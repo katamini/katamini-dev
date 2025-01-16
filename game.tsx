@@ -363,8 +363,9 @@ const Game: React.FC = () => {
       if (finished) return; // Stop animation when game is over
 
       requestAnimationFrame(animate);
+      time += 0.016; 
+      
       if (!gamePaused) { 
-        time += 0.016; 
         // Update time elapsed
         const currentTime = Date.now();
         const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
