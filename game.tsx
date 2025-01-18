@@ -6,7 +6,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { SizeIndicator } from "./components/size-indicator";
 import { auraVertexShader, auraFragmentShader } from "./shaders/aura";
 import type { GameObject, GameState } from "./types/game";
-import { levels, getCurrentLevel, getNextLevel, distributeObjects } from "./levels";
+import { levels, getCurrentLevel, distributeObjects } from "./levels";
+import StartMenu from "./StartMenu";
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -30,8 +31,8 @@ const Game: React.FC = () => {
     lastY: 0,
     isDragging: false
   });
-  
-  const [currentLevelId, setCurrentLevelId] = useState<string>(levels[0].id);
+
+  const [currentLevelId, setCurrentLevelId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState>({
     playerSize: 0.5,
     collectedObjects: [],
@@ -155,22 +156,22 @@ const Game: React.FC = () => {
 
   // Update player scale when playerSize changes
   useEffect(() => {
-   if (playerRef.current) {
-    // Scale only the player geometry and its direct parts
-    playerRef.current.children.forEach(child => {
-      if (child instanceof THREE.Group && child === collectedObjectsRef.current) {
-        // Counter-scale the collected objects container
-        child.scale.setScalar(1 / (gameState.playerSize * 0.25));
-      } else {
-        // Scale roomba parts (top disc and sensor)
-        child.scale.setScalar(1);
-      }
-    });
-    
-    // Scale the player
-    playerRef.current.scale.setScalar(gameState.playerSize * 0.25);
-    playerRef.current.position.y = 0.1 * playerRef.current.scale.y;
-   }
+    if (playerRef.current) {
+      // Scale only the player geometry and its direct parts
+      playerRef.current.children.forEach(child => {
+        if (child instanceof THREE.Group && child === collectedObjectsRef.current) {
+          // Counter-scale the collected objects container
+          child.scale.setScalar(1 / (gameState.playerSize * 0.25));
+        } else {
+          // Scale roomba parts (top disc and sensor)
+          child.scale.setScalar(1);
+        }
+      });
+      
+      // Scale the player
+      playerRef.current.scale.setScalar(gameState.playerSize * 0.25);
+      playerRef.current.position.y = 0.1 * playerRef.current.scale.y;
+    }
   }, [gameState.playerSize]);
 
   // Handle user interaction
@@ -245,7 +246,7 @@ const Game: React.FC = () => {
 
   // Main game setup and loop
   useEffect(() => {
-    if (!mountRef.current) return;
+    if (!mountRef.current || !currentLevelId) return;
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -507,364 +508,365 @@ const Game: React.FC = () => {
           "music/effects/05.mp3",
         ]);
         setGameOver(true);
-	return;
-
-        // Move to the next level
-	/*
-        const nextLevel = getNextLevel(currentLevelId);
-        if (nextLevel) {
-          setCurrentLevelId(nextLevel.id);
-          setGameState({
-            playerSize: 0.5,
-            collectedObjects: [],
-            timeElapsed: 0,
-            currentClass: 0,
-          });
-          finishedRef.current = false;
-          initializeSceneWithLevel(nextLevel);
-        }
-	*/
+        return;
       }
 
       // Find the smallest remaining object
       const smallestObject = objects.reduce(
         (smallest, obj) => {
-          if (obj.parent === scene && obj.userData.size < smallest.userData.size) {
-            return obj;
-          }
-          return smallest;
-        },
-        { userData: { size: Infinity } }
-      );
-
-      // Update aura uniforms and visibility
-      objects.forEach((object, index) => {
-        if (object.parent === scene) {
-          const aura = auras[index];
-          if (aura) {
-            aura.material.uniforms.time.value = time;
-            aura.visible =
-              object.userData.size <=
-              Math.max(gameState.playerSize * 1.2, smallestObject.userData.size);
-          }
+        if (obj.parent === scene && obj.userData.size < smallest.userData.size) {
+          return obj;
         }
-      });
+        return smallest;
+      },
+      { userData: { size: Infinity } }
+    );
 
-      // Player movement using keysRef
-      const moveDirection = new THREE.Vector3();
-      if (keysRef.current.ArrowUp) moveDirection.z -= 1;
-      if (keysRef.current.ArrowDown) moveDirection.z += 1;
-      
-      if (keysRef.current.ArrowLeft) {
-        playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed);
+    // Update aura uniforms and visibility
+    objects.forEach((object, index) => {
+      if (object.parent === scene) {
+        const aura = auras[index];
+        if (aura) {
+          aura.material.uniforms.time.value = time;
+          aura.visible =
+            object.userData.size <=
+            Math.max(gameState.playerSize * 1.2, smallestObject.userData.size);
+        }
       }
-      if (keysRef.current.ArrowRight) {
-        playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed);
-      }
+    });
 
-      let dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.6);  // Increased scaling factor
-      const dynamicAcceleration = acceleration * (1 + gameState.playerSize * 0.4);  // Add dynamic acceleration
-      playerVelocity.add(
-        playerDirection.clone().multiplyScalar(moveDirection.z * dynamicAcceleration)
-      );
+    // Player movement using keysRef
+    const moveDirection = new THREE.Vector3();
+    if (keysRef.current.ArrowUp) moveDirection.z -= 1;
+    if (keysRef.current.ArrowDown) moveDirection.z += 1;
+    
+    if (keysRef.current.ArrowLeft) {
+      playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed);
+    }
+    if (keysRef.current.ArrowRight) {
+      playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed);
+    }
 
-      playerVelocity.y -= gravity;
+    let dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.6);  // Increased scaling factor
+    const dynamicAcceleration = acceleration * (1 + gameState.playerSize * 0.4);  // Add dynamic acceleration
+    playerVelocity.add(
+      playerDirection.clone().multiplyScalar(moveDirection.z * dynamicAcceleration)
+    );
 
-      isGrounded = player.position.y <= player.scale.y * 0.5;
-      if (isGrounded) {
-        player.position.y = player.scale.y * 0.5;
-        playerVelocity.y = Math.max(0, playerVelocity.y);
-      }
+    playerVelocity.y -= gravity;
 
-      if (keysRef.current.Space && isGrounded) {
-        playerVelocity.y = jumpForce;
-      }
+    isGrounded = player.position.y <= player.scale.y * 0.5;
+    if (isGrounded) {
+      player.position.y = player.scale.y * 0.5;
+      playerVelocity.y = Math.max(0, playerVelocity.y);
+    }
 
-      // Apply friction and limit speed
-      playerVelocity.multiplyScalar(friction);
-      
-      if (isMobileDevice) { dynamicMaxSpeed = dynamicMaxSpeed * 2; }
-      if (playerVelocity.length() > dynamicMaxSpeed) {
-        playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
-      }
+    if (keysRef.current.Space && isGrounded) {
+      playerVelocity.y = jumpForce;
+    }
 
-      // Calculate next position
-      const nextPosition = player.position.clone().add(playerVelocity);
-      nextPosition.x = Math.max(-24, Math.min(24, nextPosition.x));
-      nextPosition.z = Math.max(-24, Math.min(24, nextPosition.z));
+    // Apply friction and limit speed
+    playerVelocity.multiplyScalar(friction);
+    
+    if (isMobileDevice) { dynamicMaxSpeed = dynamicMaxSpeed * 2; }
+    if (playerVelocity.length() > dynamicMaxSpeed) {
+      playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
+    }
 
-      // Check collisions with objects
-      let collisionOccurred = false;
-      objects.forEach((object, index) => {
-        if (object.parent === scene) {
-          const distance = nextPosition.distanceTo(object.position);
-          const combinedRadius = player.scale.x * 0.5 + object.userData.size * 0.05;
+    // Calculate next position
+    const nextPosition = player.position.clone().add(playerVelocity);
+    nextPosition.x = Math.max(-24, Math.min(24, nextPosition.x));
+    nextPosition.z = Math.max(-24, Math.min(24, nextPosition.z));
 
-          if (distance < combinedRadius) {
-            if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
-              // Object collection logic
-              scene.remove(object);
-              const aura = auras[index];
-              if (aura) {
-                aura.visible = false;
-                aura.parent?.remove(aura);
-              }
-              totalObjects--;
+    // Check collisions with objects
+    let collisionOccurred = false;
+    objects.forEach((object, index) => {
+      if (object.parent === scene) {
+        const distance = nextPosition.distanceTo(object.position);
+        const combinedRadius = player.scale.x * 0.5 + object.userData.size * 0.05;
 
-              // Position on sphere surface
-              const u = Math.random();
-              const v = Math.random();
-              const radius = player.scale.x * 0.5;
-
-              const theta = 2 * Math.PI * u;
-              const phi = Math.acos(2 * v - 1);
-
-              const surfacePosition = new THREE.Vector3(
-                radius * Math.sin(phi) * Math.cos(theta),
-                radius * Math.sin(phi) * Math.sin(theta),
-                radius * Math.cos(phi)
-              );
-
-              object.userData.initialPosition = {
-                theta: theta,
-                phi: phi,
-                radius: radius,
-              };
-
-              object.position.copy(surfacePosition);
-              surfacePosition.add(
-                new THREE.Vector3(
-                  (Math.random() - 0.5) * 0.05,
-                  (Math.random() - 0.5) * 0.05,
-                  (Math.random() - 0.5) * 0.05
-                ).multiplyScalar(player.scale.x)
-              );
-
-              const scaleFactor = Math.min(1.2, object.userData.size / gameState.playerSize);
-              object.scale.multiplyScalar(scaleFactor * 0.8);
-              collectedObjectsContainer.add(object);  
-
-              if (blipSoundRef.current) {
-                blipSoundRef.current.play().catch((error) => {
-                  console.log("Failed to play blip sound:", error);
-                });
-              }
-
-              // Update game state
-              setGameState((prev) => {
-                const currentClass = sizeTiers[prev.currentClass];
-                const objectsInClass = prev.collectedObjects.filter(
-                  (obj) => obj.size >= currentClass.min && obj.size <= currentClass.max
-                );
-
-                const allObjectsInClassCaptured =
-                  objectsInClass.length + 1 >= currentClass.requiredCount;
-
-                let newPlayerSize = prev.playerSize;
-                let newClass = prev.currentClass;
-
-                if (allObjectsInClassCaptured && prev.currentClass < sizeTiers.length - 1) {
-                  newClass += 1;
-                  newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
-                  console.log('roomba upgraded', newPlayerSize);
-
-                  playRandomSound([
-                    "music/effects/01.mp3",
-                    "music/effects/03.mp3",
-                    "music/effects/04.mp3",
-                  ]);
-                }
-
-                return {
-                  ...prev,
-                  playerSize: newPlayerSize,
-                  currentClass: newClass,
-                  collectedObjects: [
-                    ...prev.collectedObjects,
-                    {
-                      type: "object",
-                      size: object.userData.size,
-                      position: surfacePosition.toArray(),
-                      rotation: [0, 0, 0],
-                      scale: object.scale.x,
-                      model: "",
-                      color: "#ffffff",
-                    },
-                  ],
-                };
-              });
-
-              player.position.y = 0.1 * player.scale.y;
-
-              // Update collected objects positions
-              collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
-                if (child.userData.size < gameState.playerSize * 0.08) {
-                  collectedObjectsContainer.remove(child);
-                  return;
-                }
-
-                const initialPos = child.userData.initialPosition;
-                const currentRadius = player.scale.x * 0.5;
-                const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
-                const rotationSpeed = playerVelocity.length() * 2;
-                const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
-
-                child.position.set(
-                  currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
-                  currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
-                  currentRadius * Math.cos(initialPos.phi)
-                );
-              });
-
-              cameraOffset.z = Math.max(2.5, player.scale.x * 3);
-            } else {
-              // Bounce off larger objects
-              collisionOccurred = true;
-              const pushDirection = nextPosition
-                .clone()
-                .sub(object.position)
-                .normalize();
-              playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
-
-              // Squish effect
-              player.scale.x *= 0.95;
-              player.scale.z *= 1.05;
-              setTimeout(() => {
-                player.scale.x /= 0.95;
-                player.scale.z /= 1.05;
-              }, 100);
+        if (distance < combinedRadius) {
+          if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
+            // Object collection logic
+            scene.remove(object);
+            const aura = auras[index];
+            if (aura) {
+              aura.visible = false;
+              aura.parent?.remove(aura);
             }
+            totalObjects--;
+
+            // Position on sphere surface
+            const u = Math.random();
+            const v = Math.random();
+            const radius = player.scale.x * 0.5;
+
+            const theta = 2 * Math.PI * u;
+            const phi = Math.acos(2 * v - 1);
+
+            const surfacePosition = new THREE.Vector3(
+              radius * Math.sin(phi) * Math.cos(theta),
+              radius * Math.sin(phi) * Math.sin(theta),
+              radius * Math.cos(phi)
+            );
+
+            object.userData.initialPosition = {
+              theta: theta,
+              phi: phi,
+              radius: radius,
+            };
+
+            object.position.copy(surfacePosition);
+            surfacePosition.add(
+              new THREE.Vector3(
+                (Math.random() - 0.5) * 0.05,
+                (Math.random() - 0.5) * 0.05,
+                (Math.random() - 0.5) * 0.05
+              ).multiplyScalar(player.scale.x)
+            );
+
+            const scaleFactor = Math.min(1.2, object.userData.size / gameState.playerSize);
+            object.scale.multiplyScalar(scaleFactor * 0.8);
+            collectedObjectsContainer.add(object);  
+
+            if (blipSoundRef.current) {
+              blipSoundRef.current.play().catch((error) => {
+                console.log("Failed to play blip sound:", error);
+              });
+            }
+
+            // Update game state
+            setGameState((prev) => {
+              const currentClass = sizeTiers[prev.currentClass];
+              const objectsInClass = prev.collectedObjects.filter(
+                (obj) => obj.size >= currentClass.min && obj.size <= currentClass.max
+              );
+
+              const allObjectsInClassCaptured =
+                objectsInClass.length + 1 >= currentClass.requiredCount;
+
+              let newPlayerSize = prev.playerSize;
+              let newClass = prev.currentClass;
+
+              if (allObjectsInClassCaptured && prev.currentClass < sizeTiers.length - 1) {
+                newClass += 1;
+                newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
+                console.log('roomba upgraded', newPlayerSize);
+
+                playRandomSound([
+                  "music/effects/01.mp3",
+                  "music/effects/03.mp3",
+                  "music/effects/04.mp3",
+                ]);
+              }
+
+              return {
+                ...prev,
+                playerSize: newPlayerSize,
+                currentClass: newClass,
+                collectedObjects: [
+                  ...prev.collectedObjects,
+                  {
+                    type: "object",
+                    size: object.userData.size,
+                    position: surfacePosition.toArray(),
+                    rotation: [0, 0, 0],
+                    scale: object.scale.x,
+                    model: "",
+                    color: "#ffffff",
+                  },
+                ],
+              };
+            });
+
+            player.position.y = 0.1 * player.scale.y;
+
+            // Update collected objects positions
+            collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
+              if (child.userData.size < gameState.playerSize * 0.08) {
+                collectedObjectsContainer.remove(child);
+                return;
+              }
+
+              const initialPos = child.userData.initialPosition;
+              const currentRadius = player.scale.x * 0.5;
+              const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
+              const rotationSpeed = playerVelocity.length() * 2;
+              const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
+
+              child.position.set(
+                currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
+                currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
+                currentRadius * Math.cos(initialPos.phi)
+              );
+            });
+
+            cameraOffset.z = Math.max(2.5, player.scale.x * 3);
+          } else {
+            // Bounce off larger objects
+            collisionOccurred = true;
+            const pushDirection = nextPosition
+              .clone()
+              .sub(object.position)
+              .normalize();
+            playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
+
+            // Squish effect
+            player.scale.x *= 0.95;
+            player.scale.z *= 1.05;
+            setTimeout(() => {
+              player.scale.x /= 0.95;
+              player.scale.z /= 1.05;
+            }, 100);
           }
         }
-      });
-
-      // Update player position
-      if (!collisionOccurred) {
-        player.position.copy(nextPosition);
-      } else {
-        player.position.add(playerVelocity);
       }
+    });
 
-      // Ensure player stays above ground
-      player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
+    // Update player position
+    if (!collisionOccurred) {
+      player.position.copy(nextPosition);
+    } else {
+      player.position.add(playerVelocity);
+    }
 
-      // Update camera
-      const zoomFactor = 4; // Increased zoom factor
-      const targetZoom = THREE.MathUtils.clamp(
-        player.scale.x * zoomFactor, 
-        minZoom, 
-        maxZoom
+    // Ensure player stays above ground
+    player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
+
+    // Update camera
+    const zoomFactor = 4; // Increased zoom factor
+    const targetZoom = THREE.MathUtils.clamp(
+      player.scale.x * zoomFactor, 
+      minZoom, 
+      maxZoom
+    );
+
+    currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1);
+    cameraOffset.z = currentZoom;
+
+    // Adjust camera height based on zoom level
+    cameraOffset.y = Math.max(2, currentZoom * 0.3); // Camera height scales with zoom
+
+    const idealOffset = cameraOffset
+      .clone()
+      .applyAxisAngle(
+        new THREE.Vector3(0, 1, 0),
+        Math.atan2(playerDirection.x, playerDirection.z)
       );
+    camera.position.lerp(player.position.clone().add(idealOffset), 0.1);
+    camera.lookAt(player.position);
 
-      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1);
-      cameraOffset.z = currentZoom;
-
-      // Adjust camera height based on zoom level
-      cameraOffset.y = Math.max(2, currentZoom * 0.3); // Camera height scales with zoom
-
-      const idealOffset = cameraOffset
-        .clone()
-        .applyAxisAngle(
-          new THREE.Vector3(0, 1, 0),
-          Math.atan2(playerDirection.x, playerDirection.z)
-        );
-      camera.position.lerp(player.position.clone().add(idealOffset), 0.1);
-      camera.lookAt(player.position);
-
-      renderer.render(scene, camera);
-    };
-
-    // Handle window resize
-    const onWindowResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      if (isMobileDevice) {
-        renderer.setPixelRatio(window.devicePixelRatio / 2);
-      } else {
-        renderer.setPixelRatio(window.devicePixelRatio);
-      }
-    };
-    window.addEventListener("resize", onWindowResize);
-
-    // Start animation
-    if (!finishedRef.current) animate();
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("resize", onWindowResize);
-      mountRef.current?.removeChild(renderer.domElement);
-    };
-  }, [currentLevelId]);
-
-  const touchpadStyles = {
-    position: 'fixed' as const,
-    bottom: '40px',
-    right: '40px',
-    width: '120px',
-    height: '120px',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: '50%',
-    border: '3px solid rgba(255, 255, 255, 0.8)',
-    zIndex: 1000,
-    touchAction: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    userSelect: 'none' as const
+    renderer.render(scene, camera);
   };
 
-  const centerDotStyles = {
-    width: '30px',
-    height: '30px',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: '50%',
-    border: '2px solid rgba(255, 255, 255, 1)'
+  // Handle window resize
+  const onWindowResize = () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (isMobileDevice) {
+      renderer.setPixelRatio(window.devicePixelRatio / 2);
+    } else {
+      renderer.setPixelRatio(window.devicePixelRatio);
+    }
   };
+  window.addEventListener("resize", onWindowResize);
 
-  return (
-    <>
-      <div ref={mountRef} />
-      <SizeIndicator size={gameState.playerSize} time={gameState.timeElapsed} />
-      <audio ref={audioRef} />
-      <audio ref={blipSoundRef} />
-      {gameOver && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
-          <div className="bg-white p-8 rounded-lg text-center">
-            <h1 className="text-3xl font-bold mb-4 rainbow_text_animated"><b>Congratulations!</b></h1>
-            <p className="text-xl mb-2">You vacuumed all the objects!</p>
-            <p className="text-lg">
-              Final size: {Math.floor(gameState.playerSize)} cm{" "}
-              {Math.floor((gameState.playerSize % 1) * 10)} mm
-            </p>
-            <p className="text-lg">
-              Time: {Math.floor(gameState.timeElapsed / 60)}m{" "}
-              {gameState.timeElapsed % 60}s
-            </p>
-            <br />
-            <button type="button" onClick={refreshPage}>
-              <span className="rainbow rainbow_text_animated text-lg">PLAY AGAIN</span>
-            </button>
-            <br />
-            <img src="https://i.imgur.com/n1lfojs.gif" />
+  // Start animation
+  if (!finishedRef.current) animate();
+
+  // Cleanup
+  return () => {
+    window.removeEventListener("resize", onWindowResize);
+    mountRef.current?.removeChild(renderer.domElement);
+  };
+}, [currentLevelId]);
+
+const touchpadStyles = {
+  position: 'fixed' as const,
+  bottom: '40px',
+  right: '40px',
+  width: '120px',
+  height: '120px',
+  backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  borderRadius: '50%',
+  border: '3px solid rgba(255, 255, 255, 0.8)',
+  zIndex: 1000,
+  touchAction: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  userSelect: 'none' as const
+};
+
+const centerDotStyles = {
+  width: '30px',
+  height: '30px',
+  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  borderRadius: '50%',
+  border: '2px solid rgba(255, 255, 255, 1)'
+};
+
+const handleLevelSelect = (levelId: string) => {
+  setCurrentLevelId(levelId);
+  setGameState({
+    playerSize: 0.5,
+    collectedObjects: [],
+    timeElapsed: 0,
+    currentClass: 0,
+  });
+  setGameOver(false);
+  finishedRef.current = false;
+};
+
+return (
+  <>
+    {!currentLevelId ? (
+      <StartMenu onSelectLevel={handleLevelSelect} />
+    ) : (
+      <>
+        <div ref={mountRef} />
+        <SizeIndicator size={gameState.playerSize} time={gameState.timeElapsed} />
+        <audio ref={audioRef} />
+        <audio ref={blipSoundRef} />
+        {gameOver && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
+            <div className="bg-white p-8 rounded-lg text-center">
+              <h1 className="text-3xl font-bold mb-4 rainbow_text_animated"><b>Congratulations!</b></h1>
+              <p className="text-xl mb-2">You vacuumed all the objects!</p>
+              <p className="text-lg">
+                Final size: {Math.floor(gameState.playerSize)} cm{" "}
+                {Math.floor((gameState.playerSize % 1) * 10)} mm
+              </p>
+              <p className="text-lg">
+                Time: {Math.floor(gameState.timeElapsed / 60)}m{" "}
+                {gameState.timeElapsed % 60}s
+              </p>
+              <br />
+              <button type="button" onClick={() => setCurrentLevelId(null)}>
+                <span className="rainbow rainbow_text_animated text-lg">RETURN TO MENU</span>
+              </button>
+              <br />
+              <img src="https://i.imgur.com/n1lfojs.gif" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {isMobileDevice && (
-        <div 
-          style={touchpadStyles}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        >
-          <div style={centerDotStyles} />
-        </div>
-      )}
-
-    </>
-  );
+        {isMobileDevice && (
+          <div 
+            style={touchpadStyles}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+          >
+            <div style={centerDotStyles} />
+          </div>
+        )}
+      </>
+    )}
+  </>
+);
 };
 
 const refreshPage = () => {
