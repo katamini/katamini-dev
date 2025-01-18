@@ -193,56 +193,55 @@ const Game: React.FC = () => {
 
   // Music system
   useEffect(() => {
-    const audio = new Audio("music/katamini_0" + randoSeed(1, 4) + ".mp3");
-    const blipSound = new Audio("music/blips/0" + randoSeed(1, 9) + ".mp3");
-    audio.loop = true;
-    audio.volume = 0.4;
-    audioRef.current = audio;
-    blipSound.volume = 0.3;
-    blipSoundRef.current = blipSound;
+	  let audio: HTMLAudioElement | null = null;
+	  let blipSound: HTMLAudioElement | null = null;
 
-    const playAudio = () => {
-      audio.play().catch((error) => {
-        console.log("Failed to play audio:", error);
-      });
-    };
+	  const playAudio = () => {
+	    if (audio) {
+	      audio.play().catch((error) => {
+	        console.log("Failed to play audio:", error);
+	      });
+	    }
+	  };
 
-    if (userInteracted) {
-      playRandomSound([
-        "music/effects/01.mp3",
-        "music/effects/03.mp3",
-        "music/effects/04.mp3",
-        "music/effects/05.mp3",
-      ]);
-      playAudio();
-    }
+	  const stopAudio = () => {
+	    if (audio) {
+	      audio.pause();
+	      audio = null;
+	    }
+	    if (blipSound) {
+	      blipSound = null;
+	    }
+	  };
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && userInteracted) {
-        playRandomSound([
-          "music/effects/01.mp3",
-          "music/effects/02.mp3",
-          "music/effects/03.mp3",
-          "music/effects/04.mp3",
-          "music/effects/05.mp3",
-        ]);
-        playAudio();
-      } else {
-        playRandomSound(["music/effects/02.mp3"]);
-        audio.pause();
-      }
-    };
+	  if (currentLevelId && userInteracted) {
+	    const currentLevel = getCurrentLevel(currentLevelId);
+	    const randomBackgroundMusic = currentLevel.backgroundMusic[Math.floor(Math.random() * currentLevel.backgroundMusic.length)];
+	    audio = new Audio(randomBackgroundMusic);
+	    audio.loop = true;
+	    audio.volume = 0.4;
+	    audioRef.current = audio;
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+	    playAudio();
+	  }
 
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [userInteracted]);
+	  const handleVisibilityChange = () => {
+	    if (document.visibilityState === "visible" && userInteracted) {
+	      playAudio();
+	    } else {
+	      stopAudio();
+	    }
+	  };
+
+	  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+	  return () => {
+	    document.removeEventListener("visibilitychange", handleVisibilityChange);
+	    stopAudio();
+	  };
+  }, [currentLevelId, userInteracted]);
+
+
 
   // Main game setup and loop
   useEffect(() => {
@@ -681,25 +680,40 @@ const Game: React.FC = () => {
 
             player.position.y = 0.1 * player.scale.y;
 
-            // Update collected objects positions
-            collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
-              if (child.userData.size < gameState.playerSize * 0.08) {
-                collectedObjectsContainer.remove(child);
-                return;
-              }
+        // Update collected objects positions
+        let soundEffect; 
+	soundEffect = new Audio("music/blips/0" + randoSeed(1, 9) + ".mp3");
+	soundEffect.volume = 0.2;
 
-              const initialPos = child.userData.initialPosition;
-              const currentRadius = player.scale.x * 0.5;
-              const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
-              const rotationSpeed = playerVelocity.length() * 2;
-              const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
+	collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
+	  if (child.userData.size < gameState.playerSize * 0.08) {
+	    collectedObjectsContainer.remove(child);
+	    return;
+	  }
+	
+	  const initialPos = child.userData.initialPosition;
+	  const currentRadius = player.scale.x * 0.5;
+	  const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
+	  const rotationSpeed = playerVelocity.length() * 2;
+	  const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
+	
+	  child.position.set(
+	    currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
+	    currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
+	    currentRadius * Math.cos(initialPos.phi)
+	  );
+	
+	  // Play sound effect for the collected object
+	  const currentLevel = getCurrentLevel(currentLevelId);
+	  const collectedObjectSound = currentLevel.gameObjects.find(obj => obj.type === child.userData.type)?.sound;
+ 	  if(collectedObjectSound) soundEffect = new Audio(collectedObjectSound);
+	
+	  soundEffect.play().catch((error) => {
+	    console.log("Failed to play sound effect:", error);
+	  });
+	});
 
-              child.position.set(
-                currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
-                currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
-                currentRadius * Math.cos(initialPos.phi)
-              );
-            });
+
 
             cameraOffset.z = Math.max(2.5, player.scale.x * 3);
           } else {
