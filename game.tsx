@@ -66,6 +66,23 @@ const Game: React.FC = () => {
     setIsMobileDevice(detectMobileDevice());
   }, []);
 
+  useEffect(() => {
+    // handle controls on game over screen
+    if (gameOver) {
+      const handleKeyPress = (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          finishedRef.current = true;
+          setGameOver(true);
+          setCurrentLevelId(null); // Exit to menu
+        }
+      };
+      window.addEventListener('keydown', handleKeyPress);
+      return () => {
+        window.removeEventListener('keydown', handleKeyPress);
+      };
+    }
+  }, [gameOver]);   
+
   const handleTouchStart = (event: React.TouchEvent) => {
     const touch = event.touches[0];
     touchRef.current = {
