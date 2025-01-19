@@ -261,7 +261,7 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
       <button 
         onClick={(e) => {
           e.preventDefault();
-          window.open("https://github.com/lmangani/katamini", "_blank");
+          window.open("https://github.com/katamini", "_blank");
         }}
         className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white text-2xl font-bold"
       >
