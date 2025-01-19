@@ -44,6 +44,16 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     const audio = playRandomMenuMusic();
     audioRef.current = audio;
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        audioRef.current?.pause();
+      } else {
+        audioRef.current?.play();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -213,6 +223,7 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', handleResize);
       mountRef.current?.removeChild(renderer.domElement);
@@ -250,7 +261,7 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
       <button 
         onClick={(e) => {
           e.preventDefault();
-          alert('Help');
+          window.open("https://github.com/lmangani/katamini", "_blank");
         }}
         className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white text-2xl font-bold"
       >

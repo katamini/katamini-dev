@@ -210,7 +210,7 @@ const Game: React.FC = () => {
 	  const stopAudio = () => {
 	    if (audio) {
 	      audio.pause();
-	      audio = null;
+	      // audio = null;
 	    }
 	    if (blipSound) {
 	      blipSound = null;
@@ -230,8 +230,10 @@ const Game: React.FC = () => {
 
 	  const handleVisibilityChange = () => {
 	    if (document.visibilityState === "visible" && userInteracted) {
+		console.log('switch: resume playback');
 	      playAudio();
 	    } else {
+		console.log('switch: pause playback');
 	      stopAudio();
 	    }
 	  };
