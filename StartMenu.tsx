@@ -10,6 +10,16 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const playRandomSound = (sounds: string[]) => {
+    const randomIndex = Math.floor(Math.random() * sounds.length);
+    const sound = new Audio(sounds[randomIndex]);
+    sound.volume = 0.3;
+    sound.play().catch((error) => {
+      console.log("Failed to play random sound:", error);
+    });
+  };
+
+
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -110,13 +120,12 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
         }
       `
     });
-    
     /*
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sun.position.set(-8, -4, -15);
     scene.add(sun);
     */
-    
+
     // Level setup
     const levelGroup = new THREE.Group();
     scene.add(levelGroup);
@@ -211,6 +220,13 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     // Keyboard controls
     const handleKeyDown = (event: KeyboardEvent) => {
       event.preventDefault(); // Prevent key events from reaching the game
+      playRandomSound([  
+          "music/effects/01.mp3",
+          "music/effects/03.mp3",
+          "music/effects/04.mp3",
+          "music/effects/05.mp3",
+        ]);
+
       switch (event.key) {
         case 'ArrowLeft':
           setSelectedIndex((prev) => (prev - 1 + levels.length) % levels.length);
