@@ -191,11 +191,31 @@ const createLevel3Objects = (): GameObject[] => [
   },
   {
     type: "coin",
-    size: 0.8,
+    size: 1,
     model: "models/coin.glb",
     position: [1, 0, 0],
     rotation: [0, 0, 0],
     scale: 0.2,
+    color: "#87CEEB",
+    sound: "music/blips/01.mp3",
+  },
+  {
+    type: "coin",
+    size: 2,
+    model: "models/coin.glb",
+    position: [1, 0, 0],
+    rotation: [0, 0, 0],
+    scale: 0.3,
+    color: "#87CEEB",
+    sound: "music/blips/01.mp3",
+  },
+  {
+    type: "coin",
+    size: 4,
+    model: "models/coin.glb",
+    position: [1, 0, 0],
+    rotation: [0, 0, 0],
+    scale: 0.4,
     color: "#87CEEB",
     sound: "music/blips/01.mp3",
   },
@@ -266,8 +286,8 @@ export const levels: LevelConfig[] = [
   },
   {
     id: "level3",
-    name: "Garden Party",
-    zoom: 2,
+    name: "Gold Rush",
+    zoom: 0.1,
     roomSize: 10,
     maxTime: 10, // 10 seconds
     description: "Clean up after an outdoor garden party!",
@@ -281,7 +301,7 @@ export const levels: LevelConfig[] = [
     requiredScore: 200,
     backgroundMusic: ["music/katamini_01.mp3", "music/katamini_04.mp3"],
     ambientColor: "#88CCFF", // Outdoor lighting
-    wallTexture: "textures/wall_shoji.png",
+    wallTexture: "textures/wall_stars.png",
     floorTexture: "textures/floor_carpet.jpg",
   }
 ];
