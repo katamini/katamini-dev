@@ -245,11 +245,12 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     <div className="relative w-full h-screen">
       <div ref={mountRef} className="absolute inset-0" />
       <div className="absolute top-0 left-0 right-0 flex justify-center mt-8">
-        <h1 className="text-6xl font-bold text-white text-center" 
+        <img className="rainbow_text_animated" src="logo.png" width="40%" />
+        <br />
+        <h1 className="text-6xl font-bold text-white text-center rainbow_text_animated" 
             style={{
               textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)'
-            }}>
-          Worlds
+            }}> beta
         </h1>
       </div>
       <button 

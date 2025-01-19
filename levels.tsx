@@ -180,12 +180,22 @@ const createLevel2Objects = (): GameObject[] => [
 const createLevel3Objects = (): GameObject[] => [
   // More challenging objects for level 3
   {
-    type: "marble",
-    size: 0.2,
-    model: "models/marble.glb",
+    type: "coin",
+    size: 0.5,
+    model: "models/coin.glb",
     position: [1, 0, 0],
     rotation: [0, 0, 0],
-    scale: 0.8,
+    scale: 0.1,
+    color: "#87CEEB",
+    sound: "music/blips/01.mp3",
+  },
+  {
+    type: "coin",
+    size: 0.8,
+    model: "models/coin.glb",
+    position: [1, 0, 0],
+    rotation: [0, 0, 0],
+    scale: 0.2,
     color: "#87CEEB",
     sound: "music/blips/01.mp3",
   },
@@ -195,7 +205,8 @@ const createLevel3Objects = (): GameObject[] => [
 export const levels: LevelConfig[] = [
   {
     id: "level1",
-    name: "Home Sweet Home",
+    name: "Sweet Home",
+    minZoom: 1,
     maxTime: 300, // 5 minutes
     description: "Start your cleaning adventure in a cozy Japanese-style room!",
     gameObjects: createLevel1Objects(),
@@ -250,13 +261,15 @@ export const levels: LevelConfig[] = [
     ],
     requiredScore: 150,
     backgroundMusic: ["music/katamini_03.mp3", "music/katamini_04.mp3"],
-    wallTexture: "textures/wall_office.png",
-    floorTexture: "textures/floor_tile.jpg",
+    wallTexture: "textures/wall_shoji.png",
+    floorTexture: "textures/floor_parquet.jpg",
   },
   {
     id: "level3",
     name: "Garden Party",
-    maxTime: 180, // 3 minutes
+    zoom: 2,
+    roomSize: 10,
+    maxTime: 10, // 10 seconds
     description: "Clean up after an outdoor garden party!",
     gameObjects: createLevel3Objects(),
     sizeTiers: [
@@ -268,8 +281,8 @@ export const levels: LevelConfig[] = [
     requiredScore: 200,
     backgroundMusic: ["music/katamini_01.mp3", "music/katamini_04.mp3"],
     ambientColor: "#88CCFF", // Outdoor lighting
-    wallTexture: "textures/wall_garden.png",
-    floorTexture: "textures/floor_grass.jpg",
+    wallTexture: "textures/wall_shoji.png",
+    floorTexture: "textures/floor_carpet.jpg",
   }
 ];
 

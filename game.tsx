@@ -139,6 +139,9 @@ const Game: React.FC = () => {
       if (event.code === "Space") {
         event.preventDefault();
       }
+       if (event.code === "Escape") {
+        setCurrentLevelId(null); // Exit to menu
+      }
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
@@ -247,6 +250,9 @@ const Game: React.FC = () => {
   useEffect(() => {
     if (!mountRef.current || !currentLevelId) return;
 
+    const currentLevel = getCurrentLevel(currentLevelId);
+    const sizeTiers = currentLevel.sizeTiers;
+
     // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#E0E0E0");
@@ -289,12 +295,13 @@ const Game: React.FC = () => {
     scene.add(hemisphereLight);
 
     // Room setup
-    const wallTexture = new THREE.TextureLoader().load("textures/wall_shoji.png");
+    const wallTexture = new THREE.TextureLoader().load(currentLevel?.wallTexture || "textures/wall_shoji.png");
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set(2.5, 1); // Adjust these values to change the pattern scale
-    
-    const roomGeometry = new THREE.BoxGeometry(50, 20, 50);
+
+    const roomSize = currentLevel.roomSize || 50;
+    const roomGeometry = new THREE.BoxGeometry(roomSize, 20, roomSize);
     const roomMaterial = new THREE.MeshStandardMaterial({
       map: wallTexture,
       color: 0xffffff, // Using white to let the texture show properly
@@ -307,7 +314,7 @@ const Game: React.FC = () => {
     scene.add(room);
 
     // Floor setup
-    const floorTexture = new THREE.TextureLoader().load("textures/floor_carpet.jpg");
+    const floorTexture = new THREE.TextureLoader().load(currentLevel.floorTexture || "textures/floor_carpet.jpg");
     floorTexture.wrapS = THREE.RepeatWrapping;
     floorTexture.wrapT = THREE.RepeatWrapping;
     floorTexture.repeat.set(20, 20);
@@ -319,7 +326,7 @@ const Game: React.FC = () => {
       side: THREE.DoubleSide,
     });
 
-    const floorGeometry = new THREE.PlaneGeometry(50, 50);
+    const floorGeometry = new THREE.PlaneGeometry(roomSize, roomSize);
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.01;
@@ -376,9 +383,6 @@ const Game: React.FC = () => {
     const objects: THREE.Object3D[] = [];
     const auras: THREE.Mesh[] = [];
     let totalObjects = objects.length;
-
-    const currentLevel = getCurrentLevel(currentLevelId);
-    const sizeTiers = currentLevel.sizeTiers;
 
     distributeObjects(currentLevel.gameObjects).forEach((obj) => {
       loader.load(
@@ -465,8 +469,8 @@ const Game: React.FC = () => {
 
     // Camera setup
     const cameraOffset = new THREE.Vector3(0, 2, 2.5);
-    const minZoom = 2.5;
-    const maxZoom = 150;
+    const minZoom = currentLevel.minZoom || 2.5;
+    const maxZoom = currentLevel.maxZoom || 150;
     let currentZoom = minZoom;
 
     camera.position.copy(player.position).add(cameraOffset);
@@ -748,7 +752,7 @@ const Game: React.FC = () => {
     player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
 
     // Update camera
-    const zoomFactor = 4; // Increased zoom factor
+    const zoomFactor = currentLevel.zoom || 4; // Increased zoom factor
     const targetZoom = THREE.MathUtils.clamp(
       player.scale.x * zoomFactor, 
       minZoom, 
