@@ -122,3 +122,13 @@ body > main {
         background-position: 100% 0;
     }
 }
+
+.logomenu {
+    max-width: 40%;
+    margin-top: 20px;
+}
+
+img > .logomenu {
+    max-width: 40%;
+    margin-top: 20px;
+}

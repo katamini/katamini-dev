@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { levels } from './levels';
+import { Howl } from 'howler';
 
 interface StartMenuProps {
   onSelectLevel: (levelId: string) => void;
@@ -9,37 +10,31 @@ interface StartMenuProps {
 const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<Howl | null>(null);
 
   const playRandomSound = (sounds: string[]) => {
     const randomIndex = Math.floor(Math.random() * sounds.length);
-    const sound = new Audio(sounds[randomIndex]);
-    sound.volume = 0.2;
-    sound.play().catch((error) => {
-      console.log("Failed to play random sound:", error);
+    const sound = new Howl({
+      src: [sounds[randomIndex]],
+      volume: 0.2,
     });
+    sound.play();
   };
 
   const menuMusicFiles = [
     "music/katamenu_01.mp3",
-//    "music/katamenu_02.mp3",
-//    "music/katamenu_03.mp3",
+    "music/katamenu_02.mp3",
+    "music/katamenu_03.mp3",
   ];
 
   const playRandomMenuMusic = () => {
     const randomIndex = Math.floor(Math.random() * menuMusicFiles.length);
-    const audio = new Audio(menuMusicFiles[randomIndex]);
-    audio.loop = true;
-    audio.volume = 0.4;
-    audio.ontimeupdate= function(i) {
-	  if((this.currentTime / this.duration)>0.98){
-	    this.currentTime = 0;
-	    this.play();
-	  }
-    };
-    audio.play().catch((error) => {
-      console.log("Failed to play menu music:", error);
+    const audio = new Howl({
+      src: [menuMusicFiles[randomIndex]],
+      loop: true,
+      volume: 0.1,
     });
+    audio.play();
     return audio;
   };
 
@@ -222,41 +217,36 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
       window.removeEventListener('resize', handleResize);
       mountRef.current?.removeChild(renderer.domElement);
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+        audioRef.current.stop();
       }
     };
   }, [onSelectLevel, selectedIndex]);
 
   const handleLevelSelect = (levelId: string) => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      audioRef.current.stop();
     }
     onSelectLevel(levelId);
   };
+
+  const logoStyle = {
+    maxWidth: '40%',
+    marginTop: '10px',
+  }
 
   return (
     <div className="relative w-full h-screen">
       <div ref={mountRef} className="absolute inset-0" />
       <div className="absolute top-0 left-0 right-0 flex justify-center mt-8">
-        <img className="rainbow_text_animated" src="logo.png" width="40%" />
+        <img className="justify-center logomenu" src="logo.png" style={logoStyle} />
         <br />
         <h1 className="text-6xl font-bold text-white text-center rainbow_text_animated" 
             style={{
-              textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)'
+              textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)',
+              marginTop: '10px'
             }}> beta
         </h1>
       </div>
-      <button 
-        onClick={(e) => {
-          e.preventDefault();
-          window.history.back();
-        }}
-        className="absolute top-4 left-4 w-16 h-16 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center"
-      >
-        <div className="w-0 h-0 border-t-8 border-t-transparent border-r-12 border-r-white border-b-8 border-b-transparent transform rotate-180" />
-      </button>
       <button 
         onClick={(e) => {
           e.preventDefault();

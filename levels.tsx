@@ -227,6 +227,7 @@ export const levels: LevelConfig[] = [
     id: "level1",
     name: "Sweet Home",
     minZoom: 1,
+    roomSize: 40,
     maxTime: 300, // 5 minutes
     description: "Start your cleaning adventure in a cozy Japanese-style room!",
     gameObjects: createLevel1Objects(),
