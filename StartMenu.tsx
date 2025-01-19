@@ -110,10 +110,13 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
         }
       `
     });
+    
+    /*
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     sun.position.set(-8, -4, -15);
     scene.add(sun);
-
+    */
+    
     // Level setup
     const levelGroup = new THREE.Group();
     scene.add(levelGroup);
