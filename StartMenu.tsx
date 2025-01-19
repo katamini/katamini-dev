@@ -14,7 +14,7 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
   const playRandomSound = (sounds: string[]) => {
     const randomIndex = Math.floor(Math.random() * sounds.length);
     const sound = new Audio(sounds[randomIndex]);
-    sound.volume = 0.3;
+    sound.volume = 0.2;
     sound.play().catch((error) => {
       console.log("Failed to play random sound:", error);
     });
@@ -30,9 +30,9 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     const randomIndex = Math.floor(Math.random() * menuMusicFiles.length);
     const audio = new Audio(menuMusicFiles[randomIndex]);
     audio.loop = true;
-    audio.volume = 0.3;
+    audio.volume = 0.4;
     audio.ontimeupdate= function(i) {
-	  if((this.currentTime / this.duration)>0.99){
+	  if((this.currentTime / this.duration)>0.98){
 	    this.currentTime = 0;
 	    this.play();
 	  }
