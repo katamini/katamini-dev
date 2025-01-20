@@ -266,10 +266,11 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
             }}> beta
         </h1>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 mb-8" style={instructionsStyle}>
-        <p>⬆️ + ⬇️ + ⬅️ + ➡️ to move</p>
-        <p>SPACE to select level</p>
-        <p>ESC to exit level</p>
+      <div className="absolute bottom-0 left-0 right-0 mb-8 rainbow_text_animated" style={instructionsStyle}>
+        <img src="https://private-user-images.githubusercontent.com/1423657/404981670-1f445820-77b1-4d44-bfc2-5bd09400299a.gif" />
+        <p>⬅️+➡️+⬆️+⬇️ to move</p>
+        <p>SPACE to select</p>
+        <p>ESC to exit</p>
       </div>
       <button 
         onClick={(e) => {
