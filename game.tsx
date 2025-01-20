@@ -9,6 +9,8 @@ import type { GameObject, GameState } from "./types/game";
 import { levels, getCurrentLevel, distributeObjects } from "./levels";
 import StartMenu from "./StartMenu";
 
+import { joinRoom } from 'trystero/torrent';
+
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -46,6 +48,9 @@ const Game: React.FC = () => {
   const detectMobileDevice = () => {
     return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
+
+  const [peerCount, setPeerCount] = useState(1);
+  const roomRef = useRef<any>(null);
 
   const loader = new GLTFLoader();
 
@@ -264,6 +269,19 @@ const Game: React.FC = () => {
 	    stopAudio();
 	  };
   }, [currentLevelId, userInteracted]);
+
+  // P2p Setup
+  useEffect(() => {
+    if (currentLevelId) {
+      const currentLevel = getCurrentLevel(currentLevelId);
+      if (currentLevel.multiplayer) {
+        const room = joinRoom({ appId: currentLevel.multiplayer }, currentLevelId);
+        roomRef.current = room;
+        room.onPeerJoin(peer => { console.log('hello',peer); setPeerCount(room.getPeers().length + 1) });
+        room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+      }
+    }
+  }, [currentLevelId]);
 
 
 
@@ -945,6 +963,11 @@ return (
             <div style={centerDotStyles} />
           </div>
         )}
+
+	<div style={{ position: 'fixed', bottom: '10px', right: '10px', backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '5px', borderRadius: '5px' }}>
+	  {`Players: ${peerCount}`}
+	</div>
+
       </>
     )}
   </>

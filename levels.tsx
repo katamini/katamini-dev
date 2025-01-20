@@ -335,6 +335,7 @@ export const levels: LevelConfig[] = [
     ambientColor: "#88CCFF", // Outdoor lighting
     wallTexture: "textures/wall_stars.mp4",
     floorTexture: "textures/floor_dirt.png",
+    multiplayer: "katamini-gold-rush",
   }
 ];
 

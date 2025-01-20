@@ -59,6 +59,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "latest",
+    "trystero": "^0.20.0",
     "vaul": "^0.9.6",
     "zod": "^3.24.1"
   },
