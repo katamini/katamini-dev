@@ -9,7 +9,7 @@ import type { GameObject, GameState } from "./types/game";
 import { levels, getCurrentLevel, distributeObjects } from "./levels";
 import StartMenu from "./StartMenu";
 
-import { joinRoom } from 'trystero/torrent';
+import { joinRoom } from 'trystero'; // trystero/torrent
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
