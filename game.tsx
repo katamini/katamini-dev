@@ -45,12 +45,12 @@ const Game: React.FC = () => {
   const [gameOver, setGameOver] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
+  const [peerCount, setPeerCount] = useState(1);
+  const roomRef = useRef<any>(null);
+
   const detectMobileDevice = () => {
     return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
-
-  const [peerCount, setPeerCount] = useState(1);
-  const roomRef = useRef<any>(null);
 
   const loader = new GLTFLoader();
 
@@ -277,7 +277,7 @@ const Game: React.FC = () => {
       if (currentLevel.multiplayer) {
         const room = joinRoom({ appId: currentLevel.multiplayer }, currentLevelId);
         roomRef.current = room;
-        room.onPeerJoin(peer => { console.log('hello',peer); setPeerCount(room.getPeers().length + 1) });
+        room.onPeerJoin(() => setPeerCount(room.getPeers().length + 1));
         room.onPeerLeave(() => setPeerCount(room.getPeers().length));
       }
     }
