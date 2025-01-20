@@ -245,6 +245,14 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
     marginTop: '10px',
   }
 
+  const instructionsStyle = {
+    color: 'white',
+    fontSize: '1.5rem',
+    textAlign: 'center',
+    textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)',
+    marginTop: '20px',
+  };
+
   return (
     <div className="relative w-full h-screen">
       <div ref={mountRef} className="absolute inset-0" />
@@ -257,6 +265,11 @@ const StartMenu: React.FC<StartMenuProps> = ({ onSelectLevel }) => {
               marginTop: '10px'
             }}> beta
         </h1>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 mb-8" style={instructionsStyle}>
+        <p>⬆️ + ⬇️ + ⬅️ + ➡️ to move</p>
+        <p>SPACE to select level</p>
+        <p>ESC to exit level</p>
       </div>
       <button 
         onClick={(e) => {
