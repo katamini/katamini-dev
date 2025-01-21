@@ -222,6 +222,20 @@ const Game: React.FC = () => {
     };
   }, []);
 
+  // Multiplayer System
+  useEffect(() => {
+	  if (multiplayerManagerRef.current && playerRef.current && currentLevelId) {
+	    const player = playerRef.current;
+	    const playerState: PlayerState = {
+	      position: [player.position.x, player.position.y, player.position.z],
+	      direction: [player.getWorldDirection(new THREE.Vector3()).toArray()],
+	      size: gameState.playerSize,
+	      collectedObjects: gameState.collectedObjects
+	    };
+	    multiplayerManagerRef.current.broadcastPlayerState(playerState);
+	  }
+  }, [gameState.playerSize, gameState.collectedObjects]);
+
   // Music system
   useEffect(() => {
 	  let audio: HTMLAudioElement | null = null;
@@ -747,26 +761,6 @@ const Game: React.FC = () => {
                 console.log("Failed to play blip sound:", error);
               });
             }
-		  
-            // Multiplayer Broadcaster of capture objects
-	    if (multiplayerManagerRef.current) {
-		    // Broadcast updated state after collecting object
-		    const playerState: PlayerState = {
-		      position: [player.position.x, player.position.y, player.position.z],
-		      direction: [playerDirection.x, playerDirection.y, playerDirection.z],
-		      size: gameState.playerSize,
-		      collectedObjects: [...gameState.collectedObjects, {
-		        type: "object",
-		        size: object.userData.size,
-		        position: surfacePosition.toArray(),
-		        rotation: [0, 0, 0],
-		        scale: object.scale.x,
-		        model: "",
-		        color: "#000",
-		      }]
-		    };
-		    multiplayerManagerRef.current.broadcastPlayerState(playerState);
-	    }
 
             // Update game state
             setGameState((prev) => {
