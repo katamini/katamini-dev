@@ -699,27 +699,7 @@ const Game: React.FC = () => {
 
         if (distance < combinedRadius) {
           if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
-
-		if (multiplayerManagerRef.current) {
-		    // Broadcast updated state after collecting object
-		    const playerState: PlayerState = {
-		      position: [player.position.x, player.position.y, player.position.z],
-		      direction: [playerDirection.x, playerDirection.y, playerDirection.z],
-		      size: gameState.playerSize,
-		      collectedObjects: [...gameState.collectedObjects, {
-		        type: "object",
-		        size: object.userData.size,
-		        position: surfacePosition.toArray(),
-		        rotation: [0, 0, 0],
-		        scale: object.scale.x,
-		        model: "",
-		        color: "#000",
-		      }]
-		    };
-		    multiplayerManagerRef.current.broadcastPlayerState(playerState);
-		  }
-		  
-		  
+		  		  
             // Object collection logic
             scene.remove(object);
             const aura = auras[index];
@@ -767,6 +747,26 @@ const Game: React.FC = () => {
                 console.log("Failed to play blip sound:", error);
               });
             }
+		  
+            // Multiplayer Broadcaster of capture objects
+	    if (multiplayerManagerRef.current) {
+		    // Broadcast updated state after collecting object
+		    const playerState: PlayerState = {
+		      position: [player.position.x, player.position.y, player.position.z],
+		      direction: [playerDirection.x, playerDirection.y, playerDirection.z],
+		      size: gameState.playerSize,
+		      collectedObjects: [...gameState.collectedObjects, {
+		        type: "object",
+		        size: object.userData.size,
+		        position: surfacePosition.toArray(),
+		        rotation: [0, 0, 0],
+		        scale: object.scale.x,
+		        model: "",
+		        color: "#000",
+		      }]
+		    };
+		    multiplayerManagerRef.current.broadcastPlayerState(playerState);
+	    }
 
             // Update game state
             setGameState((prev) => {
