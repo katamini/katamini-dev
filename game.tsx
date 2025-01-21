@@ -1,457 +1,4 @@
-"use client";
-
-import React, { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { SizeIndicator } from "./components/size-indicator";
-import { auraVertexShader, auraFragmentShader } from "./shaders/aura";
-import type { GameObject, GameState } from "./types/game";
-import { levels, getCurrentLevel, distributeObjects } from "./levels";
-import StartMenu from "./StartMenu";
-
-import { joinRoom } from "trystero"; // trystero/torrent
-
-const Game: React.FC = () => {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const blipSoundRef = useRef<HTMLAudioElement | null>(null);
-  const playerRef = useRef<THREE.Mesh | null>(null);
-  const collectedObjectsRef = useRef<THREE.Group | null>(null);
-  const finishedRef = useRef(false);
-  const keysRef = useRef({
-    ArrowUp: false,
-    ArrowDown: false,
-    ArrowLeft: false,
-    ArrowRight: false,
-    Space: false,
-  });
-
-  const touchRef = useRef({
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastY: 0,
-    isDragging: false,
-  });
-
-  const [currentLevelId, setCurrentLevelId] = useState<string | null>(null);
-  const [gameState, setGameState] = useState<GameState>({
-    playerSize: 0.5,
-    collectedObjects: [],
-    timeElapsed: 0,
-    currentClass: 0,
-  });
-  const [userInteracted, setUserInteracted] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
-
-  const [isMultiplayer, setIsMultiplayer] = useState(false);
-  const [remotePlayers, setRemotePlayers] = useState<{ [key: string]: any }>(
-    {}
-  );
-  const [peerCount, setPeerCount] = useState(0);
-  const roomRef = useRef<any>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-
-  const detectMobileDevice = () => {
-    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-  };
-
-  const loader = new GLTFLoader();
-
-  const playRandomSound = (sounds: string[]) => {
-    const randomIndex = Math.floor(Math.random() * sounds.length);
-    const sound = new Audio(sounds[randomIndex]);
-    sound.volume = 0.3;
-    sound.play().catch((error) => {
-      console.log("Failed to play random sound:", error);
-    });
-  };
-
-  function randoSeed(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  useEffect(() => {
-    setIsMobileDevice(detectMobileDevice());
-  }, []);
-
-  useEffect(() => {
-    // handle controls on game over screen
-    if (gameOver) {
-      const handleKeyPress = (event: KeyboardEvent) => {
-        if (event.key === "Enter" || event.key === " ") {
-          finishedRef.current = true;
-          setGameOver(true);
-          setCurrentLevelId(null); // Exit to menu
-        }
-      };
-      window.addEventListener("keydown", handleKeyPress);
-      return () => {
-        window.removeEventListener("keydown", handleKeyPress);
-      };
-    }
-  }, [gameOver]);
-
-  const handleTouchStart = (event: React.TouchEvent) => {
-    const touch = event.touches[0];
-    touchRef.current = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      lastX: touch.clientX,
-      lastY: touch.clientY,
-      isDragging: true,
-    };
-    console.log("Touch start", touchRef.current);
-  };
-
-  const handleTouchMove = (event: React.TouchEvent) => {
-    if (!touchRef.current.isDragging) return;
-
-    const touch = event.touches[0];
-
-    // Calculate delta from last position
-    const deltaX = touch.clientX - touchRef.current.lastX;
-    const deltaY = touch.clientY - touchRef.current.lastY;
-
-    // Reset all keys first
-    keysRef.current.ArrowUp = false;
-    keysRef.current.ArrowDown = false;
-    keysRef.current.ArrowLeft = false;
-    keysRef.current.ArrowRight = false;
-
-    // Update keys based on movement
-    const threshold = 2; // Much lower threshold
-
-    if (Math.abs(deltaY) > threshold || Math.abs(deltaX) > threshold) {
-      // If moving more vertically
-      if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        if (deltaY < 0) {
-          keysRef.current.ArrowUp = true;
-        } else {
-          keysRef.current.ArrowDown = true;
-        }
-      }
-      // If moving more horizontally
-      else {
-        if (deltaX < 0) {
-          keysRef.current.ArrowLeft = true;
-        } else {
-          keysRef.current.ArrowRight = true;
-        }
-      }
-    }
-
-    // Update last position
-    touchRef.current.lastX = touch.clientX;
-    touchRef.current.lastY = touch.clientY;
-
-    console.log("Touch move", { deltaX, deltaY, keys: { ...keysRef.current } });
-  };
-
-  const handleTouchEnd = () => {
-    touchRef.current.isDragging = false;
-    keysRef.current.ArrowUp = false;
-    keysRef.current.ArrowDown = false;
-    keysRef.current.ArrowLeft = false;
-    keysRef.current.ArrowRight = false;
-    console.log("Touch end");
-  };
-
-  // Handle keyboard controls
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      keysRef.current[event.code] = true;
-      if (event.code === "Space") {
-        event.preventDefault();
-      }
-      if (event.code === "Escape") {
-        finishedRef.current = true;
-        setGameOver(true);
-        setCurrentLevelId(null); // Exit to menu
-      }
-    };
-
-    const onKeyUp = (event: KeyboardEvent) => {
-      keysRef.current[event.code] = false;
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
-
-  // Update player scale when playerSize changes
-  useEffect(() => {
-    if (playerRef.current) {
-      // Scale only the player geometry and its direct parts
-      playerRef.current.children.forEach((child) => {
-        if (
-          child instanceof THREE.Group &&
-          child === collectedObjectsRef.current
-        ) {
-          // Counter-scale the collected objects container
-          child.scale.setScalar(1 / (gameState.playerSize * 0.25));
-        } else {
-          // Scale roomba parts (top disc and sensor)
-          child.scale.setScalar(1);
-        }
-      });
-
-      // Scale the player
-      playerRef.current.scale.setScalar(gameState.playerSize * 0.25);
-      playerRef.current.position.y = 0.1 * playerRef.current.scale.y;
-    }
-  }, [gameState.playerSize]);
-
-  // Handle user interaction
-  useEffect(() => {
-    const handleUserInteraction = () => {
-      setUserInteracted(true);
-      window.removeEventListener("click", handleUserInteraction);
-      window.removeEventListener("keydown", handleUserInteraction);
-    };
-
-    window.addEventListener("click", handleUserInteraction);
-    window.addEventListener("keydown", handleUserInteraction);
-
-    return () => {
-      window.removeEventListener("click", handleUserInteraction);
-      window.removeEventListener("keydown", handleUserInteraction);
-    };
-  }, []);
-
-  // Music system
-  useEffect(() => {
-    let audio: HTMLAudioElement | null = null;
-    let blipSound: HTMLAudioElement | null = null;
-
-    const playAudio = () => {
-      if (audio) {
-        audio.play().catch((error) => {
-          console.log("Failed to play audio:", error);
-        });
-      }
-    };
-
-    const stopAudio = () => {
-      if (audio) {
-        audio.pause();
-        // audio = null;
-      }
-      if (blipSound) {
-        blipSound = null;
-      }
-    };
-
-    if (currentLevelId && userInteracted) {
-      const currentLevel = getCurrentLevel(currentLevelId);
-      const randomBackgroundMusic =
-        currentLevel.backgroundMusic[
-          Math.floor(Math.random() * currentLevel.backgroundMusic.length)
-        ];
-      audio = new Audio(randomBackgroundMusic);
-      audio.loop = true;
-      audio.volume = 0.4;
-      audioRef.current = audio;
-
-      playAudio();
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && userInteracted) {
-        console.log("switch: resume playback");
-        playAudio();
-      } else {
-        console.log("switch: pause playback");
-        stopAudio();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      stopAudio();
-    };
-  }, [currentLevelId, userInteracted]);
-
-  // P2p Setup
-  useEffect(() => {
-    if (currentLevelId) {
-      const currentLevel = getCurrentLevel(currentLevelId);
-      if (currentLevel.multiplayer) {
-        setIsMultiplayer(true);
-        const gameId = "katamini-";
-        const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, currentLevelId);
-        roomRef.current = room;
-        if (window) window.room = roomRef.current;
-  
-        const [sendPlayerData, getPlayerData] = room.makeAction('p-data');
-        const [sendObjectCollected, getObjectCollected] = room.makeAction('o-collected');
-  
-        // Add remote player to the scene
-        const addRemotePlayer = (peerId) => {
-          if (sceneRef.current) {
-            const remotePlayerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
-            const remotePlayerMaterial = new THREE.MeshStandardMaterial({
-              color: 0x303030,
-              roughness: 0.7,
-              metalness: 0.3,
-            });
-            const remotePlayerMesh = new THREE.Mesh(remotePlayerGeometry, remotePlayerMaterial);
-            remotePlayerMesh.name = peerId;
-  
-            // Roomba details for remote player
-            const topDisc = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
-              new THREE.MeshStandardMaterial({ color: 0x404040 })
-            );
-            topDisc.position.y = 0.1;
-            remotePlayerMesh.add(topDisc);
-  
-            const sensorBump = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
-              new THREE.MeshStandardMaterial({ color: 0x202020 })
-            );
-            sensorBump.position.set(0, 0.15, 0.3);
-            remotePlayerMesh.add(sensorBump);
-  
-            remotePlayerMesh.scale.setScalar(0.25);
-            remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
-            remotePlayerMesh.castShadow = true;
-            remotePlayerMesh.receiveShadow = true;
-            sceneRef.current.add(remotePlayerMesh);
-          }
-        };
-  
-        // Remove remote player from the scene
-        const removeRemotePlayer = (peerId) => {
-          if (sceneRef.current) {
-            const remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
-            if (remotePlayerMesh) {
-              sceneRef.current.remove(remotePlayerMesh);
-            }
-          }
-        };
-  
-        room.onPeerJoin(peerId => {
-          setPeerCount(prevCount => prevCount + 1);
-          addRemotePlayer(peerId);
-        });
-  
-        room.onPeerLeave(peerId => {
-          setPeerCount(prevCount => Math.max(prevCount - 1, 0));
-          removeRemotePlayer(peerId);
-        });
-  
-        const sendPlayerDataInterval = () => {
-          if (playerRef.current) {
-            sendPlayerData({
-              position: playerRef.current.position.toArray(),
-              rotation: playerRef.current.rotation.toArray(),
-              collectedObjects: gameState.collectedObjects,
-            });
-          }
-        };
-  
-        // Send player data at intervals
-        const interval = setInterval(sendPlayerDataInterval, 100);
-  
-        getPlayerData((data, peerId) => {
-          setRemotePlayers(prev => ({
-            ...prev,
-            [peerId]: data,
-          }));
-        });
-  
-        getObjectCollected((objectId) => {
-          if (sceneRef.current) {
-            const object = sceneRef.current.getObjectByName(objectId);
-            if (object) {
-              sceneRef.current.remove(object);
-            }
-          }
-        });
-  
-        return () => {
-          clearInterval(interval);
-          if (roomRef.current) {
-            roomRef.current.leave();
-            roomRef.current = null;
-          }
-        };
-      } else if (roomRef.current) {
-        roomRef.current.leave();
-        roomRef.current = null;
-      }
-    } else {
-      setIsMultiplayer(false);
-      if (roomRef.current) {
-        roomRef.current.leave();
-        roomRef.current = null;
-        if (window.room) window.room = null;
-      }
-    }
-  }, [currentLevelId, gameState.collectedObjects]);
-
-  
-  // Main game setup and loop
-  useEffect(() => {
-    if (!mountRef.current || !currentLevelId) return;
-
-    const currentLevel = getCurrentLevel(currentLevelId);
-    const sizeTiers = currentLevel.sizeTiers;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;  // Set sceneRef.current to the newly created scene
-    scene.background = new THREE.Color("#E0E0E0");
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-    });
-
-    // Set the size of the renderer to the window size
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // Adjust the pixel ratio to lower the resolution on mobile
-    if (isMobileDevice) {
-      renderer.setPixelRatio(window.devicePixelRatio / 2); // Adjust this value as needed
-    } else {
-      renderer.setPixelRatio(window.devicePixelRatio);
-    }
-
-    renderer.shadowMap.enabled = true;
-    mountRef.current.appendChild(renderer.domElement);
-
-    // Lighting setup
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(10, 20, 10);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1200;
-    directionalLight.shadow.mapSize.height = 1200;
-    directionalLight.shadow.camera.near = 0.6;
-    directionalLight.shadow.camera.far = 50;
-    scene.add(directionalLight);
-
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffcacc, 0.3);
-    scene.add(hemisphereLight);
-
-    // Room setup
+// Room setup
     let wallTexture;
 
     let wallRepeat = [2.5, 1];
@@ -823,160 +370,153 @@ const Game: React.FC = () => {
       // Check collisions with objects
       let collisionOccurred = false;
       objects.forEach((object, index) => {
-        if (object.parent === scene) {
-          const distance = nextPosition.distanceTo(object.position);
-          const combinedRadius = player.scale.x * 0.5 + object.userData.size * 0.05;
-    
-          if (distance < combinedRadius) {
-            if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
-              // Object collection logic
-              scene.remove(object);
-    
-              // Send message to other players
-              if (roomRef.current) {
-                const [sendObjectCollected] = roomRef.current.makeAction('o-collected');
-                sendObjectCollected(object.uuid);
-              }
-    
-              const aura = auras[index];
-              if (aura) {
-                aura.visible = false;
-                aura.parent?.remove(aura);
-              }
-              totalObjects--;
-    
-              // Position on sphere surface
-              const u = Math.random();
-              const v = Math.random();
-              const radius = player.scale.x * 0.5;
-    
-              const theta = 2 * Math.PI * u;
-              const phi = Math.acos(2 * v - 1);
-    
-              const surfacePosition = new THREE.Vector3(
-                radius * Math.sin(phi) * Math.cos(theta),
-                radius * Math.sin(phi) * Math.sin(theta),
-                radius * Math.cos(phi)
-              );
-    
-              object.userData.initialPosition = {
-                theta: theta,
-                phi: phi,
-                radius: radius,
-              };
-    
-              object.position.copy(surfacePosition);
-              surfacePosition.add(
-                new THREE.Vector3(
-                  (Math.random() - 0.5) * 0.05,
-                  (Math.random() - 0.5) * 0.05,
-                  (Math.random() - 0.5) * 0.05
-                ).multiplyScalar(player.scale.x)
-              );
-    
-              const scaleFactor = Math.min(1.2, object.userData.size / gameState.playerSize);
-              object.scale.multiplyScalar(scaleFactor * 0.8);
-              collectedObjectsContainer.add(object);  
-    
-              if (blipSoundRef.current) {
-                blipSoundRef.current.play().catch((error) => {
-                  console.log("Failed to play blip sound:", error);
-                });
-              }
-    
-              // Invoke playRandomSound function
-              playRandomSound([
-                "music/effects/01.mp3",
-                "music/effects/03.mp3",
-                "music/effects/04.mp3",
-              ]);
-    
-              // Update game state
-              setGameState((prev) => {
-                const currentClass = sizeTiers[prev.currentClass];
-                const objectsInClass = prev.collectedObjects.filter(
-                  (obj) => obj.size >= currentClass.min && obj.size <= currentClass.max
-                );
-    
-                const allObjectsInClassCaptured =
-                  objectsInClass.length + 1 >= currentClass.requiredCount;
-    
-                let newPlayerSize = prev.playerSize;
-                let newClass = prev.currentClass;
-    
-                if (allObjectsInClassCaptured && prev.currentClass < sizeTiers.length - 1) {
-                  newClass += 1;
-                  newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
-                  console.log('roomba upgraded', newPlayerSize);
-    
-                  playRandomSound([
-                    "music/effects/01.mp3",
-                    "music/effects/03.mp3",
-                    "music/effects/04.mp3",
-                  ]);
+          if (object.parent === scene) {
+            const distance = nextPosition.distanceTo(object.position);
+            const combinedRadius = player.scale.x * 0.5 + object.userData.size * 0.05;
+        
+            if (distance < combinedRadius) {
+              if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
+                // Object collection logic
+                scene.remove(object);
+                
+                // Send message to other players
+                if (roomRef.current) {
+                  const [sendObjectCollected] = roomRef.current.makeAction('o-collected');
+                  sendObjectCollected(object.uuid);
                 }
-    
-                return {
-                  ...prev,
-                  playerSize: newPlayerSize,
-                  currentClass: newClass,
-                  collectedObjects: [
-                    ...prev.collectedObjects,
-                    {
-                      type: "object",
-                      size: object.userData.size,
-                      position: surfacePosition.toArray(),
-                      rotation: [0, 0, 0],
-                      scale: object.scale.x,
-                      model: "",
-                      color: "#000",
-                    },
-                  ],
+        
+                const aura = auras[index];
+                if (aura) {
+                  aura.visible = false;
+                  aura.parent?.remove(aura);
+                }
+                totalObjects--;
+        
+                // Position on sphere surface
+                const u = Math.random();
+                const v = Math.random();
+                const radius = player.scale.x * 0.5;
+        
+                const theta = 2 * Math.PI * u;
+                const phi = Math.acos(2 * v - 1);
+        
+                const surfacePosition = new THREE.Vector3(
+                  radius * Math.sin(phi) * Math.cos(theta),
+                  radius * Math.sin(phi) * Math.sin(theta),
+                  radius * Math.cos(phi)
+                );
+        
+                object.userData.initialPosition = {
+                  theta: theta,
+                  phi: phi,
+                  radius: radius,
                 };
-              });
-    
-              player.position.y = 0.1 * player.scale.y;
-    
-              // Update collected objects positions
-              collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
-                if (child.userData.size < gameState.playerSize * 0.08) {
-                  collectedObjectsContainer.remove(child);
-                  return;
-                }
-    
-                const initialPos = child.userData.initialPosition;
-                const currentRadius = player.scale.x * 0.5;
-                const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
-                const rotationSpeed = playerVelocity.length() * 2;
-                const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
-    
-                child.position.set(
-                  currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
-                  currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
-                  currentRadius * Math.cos(initialPos.phi)
+        
+                object.position.copy(surfacePosition);
+                surfacePosition.add(
+                  new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.05,
+                    (Math.random() - 0.5) * 0.05,
+                    (Math.random() - 0.5) * 0.05
+                  ).multiplyScalar(player.scale.x)
                 );
-              });
-    
-              cameraOffset.z = Math.max(2.5, player.scale.x * 3);
-            } else {
-              // Bounce off larger objects
-              collisionOccurred = true;
-              const pushDirection = nextPosition
-                .clone()
-                .sub(object.position)
-                .normalize();
-              playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
-    
-              // Squish effect
-              player.scale.x *= 0.95;
-              player.scale.z *= 1.05;
-              setTimeout(() => {
-                player.scale.x /= 0.95;
-                player.scale.z /= 1.05;
-              }, 100);
+        
+                const scaleFactor = Math.min(1.2, object.userData.size / gameState.playerSize);
+                object.scale.multiplyScalar(scaleFactor * 0.8);
+                collectedObjectsContainer.add(object);  
+        
+                if (blipSoundRef.current) {
+                  blipSoundRef.current.play().catch((error) => {
+                    console.log("Failed to play blip sound:", error);
+                  });
+                }
+        
+                // Update game state
+                setGameState((prev) => {
+                  const currentClass = sizeTiers[prev.currentClass];
+                  const objectsInClass = prev.collectedObjects.filter(
+                    (obj) => obj.size >= currentClass.min && obj.size <= currentClass.max
+                  );
+        
+                  const allObjectsInClassCaptured =
+                    objectsInClass.length + 1 >= currentClass.requiredCount;
+        
+                  let newPlayerSize = prev.playerSize;
+                  let newClass = prev.currentClass;
+        
+                  if (allObjectsInClassCaptured && prev.currentClass < sizeTiers.length - 1) {
+                    newClass += 1;
+                    newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
+                    console.log('roomba upgraded', newPlayerSize);
+        
+                    playRandomSound([
+                      "music/effects/01.mp3",
+                      "music/effects/03.mp3",
+                      "music/effects/04.mp3",
+                    ]);
+                  }
+        
+                  return {
+                    ...prev,
+                    playerSize: newPlayerSize,
+                    currentClass: newClass,
+                    collectedObjects: [
+                      ...prev.collectedObjects,
+                      {
+                        type: "object",
+                        size: object.userData.size,
+                        position: surfacePosition.toArray(),
+                        rotation: [0, 0, 0],
+                        scale: object.scale.x,
+                        model: "",
+                        color: "#000",
+                      },
+                    ],
+                  };
+                });
+        
+                player.position.y = 0.1 * player.scale.y;
+        
+                // Update collected objects positions
+                collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
+                  if (child.userData.size < gameState.playerSize * 0.08) {
+                    collectedObjectsContainer.remove(child);
+                    return;
+                  }
+        
+                  const initialPos = child.userData.initialPosition;
+                  const currentRadius = player.scale.x * 0.5;
+                  const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
+                  const rotationSpeed = playerVelocity.length() * 2;
+                  const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
+        
+                  child.position.set(
+                    currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
+                    currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
+                    currentRadius * Math.cos(initialPos.phi)
+                  );
+                });
+        
+                cameraOffset.z = Math.max(2.5, player.scale.x * 3);
+              } else {
+                // Bounce off larger objects
+                collisionOccurred = true;
+                const pushDirection = nextPosition
+                  .clone()
+                  .sub(object.position)
+                  .normalize();
+                playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
+        
+                // Squish effect
+                player.scale.x *= 0.95;
+                player.scale.z *= 1.05;
+                setTimeout(() => {
+                  player.scale.x /= 0.95;
+                  player.scale.z /= 1.05;
+                }, 100);
+              }
             }
           }
-        }
       });
 
       // Update player position
@@ -1015,52 +555,6 @@ const Game: React.FC = () => {
       renderer.render(scene, camera);
     };
 
-    // Multiplayer Handlers - Update player position and rotation
-    useEffect(() => {
-      Object.keys(remotePlayers).forEach((peerId) => {
-        let remotePlayer = remotePlayers[peerId];
-        if (sceneRef.current) {
-          let remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
-          if (!remotePlayerMesh) {
-            // Create and add remote player to the scene
-            const remotePlayerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
-            const remotePlayerMaterial = new THREE.MeshStandardMaterial({
-              color: 0x303030,
-              roughness: 0.7,
-              metalness: 0.3,
-            });
-            remotePlayerMesh = new THREE.Mesh(remotePlayerGeometry, remotePlayerMaterial);
-            remotePlayerMesh.name = peerId;
-    
-            // Roomba details for remote player
-            const topDisc = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
-              new THREE.MeshStandardMaterial({ color: 0x404040 })
-            );
-            topDisc.position.y = 0.1;
-            remotePlayerMesh.add(topDisc);
-    
-            const sensorBump = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
-              new THREE.MeshStandardMaterial({ color: 0x202020 })
-            );
-            sensorBump.position.set(0, 0.15, 0.3);
-            remotePlayerMesh.add(sensorBump);
-    
-            remotePlayerMesh.scale.setScalar(0.25);
-            remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
-            remotePlayerMesh.castShadow = true;
-            remotePlayerMesh.receiveShadow = true;
-            sceneRef.current.add(remotePlayerMesh);
-          } else {
-            // Update remote player position and rotation
-            remotePlayerMesh.position.set(...remotePlayer.position);
-            remotePlayerMesh.rotation.set(...remotePlayer.rotation);
-          }
-        }
-      });
-    }, [remotePlayers]);
-
     // Handle window resize
     const onWindowResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -1083,6 +577,52 @@ const Game: React.FC = () => {
       mountRef.current?.removeChild(renderer.domElement);
     };
   }, [currentLevelId]);
+
+  // Multiplayer Handlers - Update player position and rotation
+  useEffect(() => {
+    Object.keys(remotePlayers).forEach((peerId) => {
+      let remotePlayer = remotePlayers[peerId];
+      if (sceneRef.current) {
+        let remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
+        if (!remotePlayerMesh) {
+          // Create and add remote player to the scene
+          const remotePlayerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+          const remotePlayerMaterial = new THREE.MeshStandardMaterial({
+            color: 0x303030,
+            roughness: 0.7,
+            metalness: 0.3,
+          });
+          remotePlayerMesh = new THREE.Mesh(remotePlayerGeometry, remotePlayerMaterial);
+          remotePlayerMesh.name = peerId;
+
+          // Roomba details for remote player
+          const topDisc = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
+            new THREE.MeshStandardMaterial({ color: 0x404040 })
+          );
+          topDisc.position.y = 0.1;
+          remotePlayerMesh.add(topDisc);
+
+          const sensorBump = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
+            new THREE.MeshStandardMaterial({ color: 0x202020 })
+          );
+          sensorBump.position.set(0, 0.15, 0.3);
+          remotePlayerMesh.add(sensorBump);
+
+          remotePlayerMesh.scale.setScalar(0.25);
+          remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
+          remotePlayerMesh.castShadow = true;
+          remotePlayerMesh.receiveShadow = true;
+          sceneRef.current.add(remotePlayerMesh);
+        } else {
+          // Update remote player position and rotation
+          remotePlayerMesh.position.set(...remotePlayer.position);
+          remotePlayerMesh.rotation.set(...remotePlayer.rotation);
+        }
+      }
+    });
+  }, [remotePlayers]);
 
   const touchpadStyles = {
     position: "fixed" as const,
