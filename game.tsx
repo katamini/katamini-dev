@@ -8,6 +8,8 @@ import { auraVertexShader, auraFragmentShader } from "./shaders/aura";
 import type { GameObject, GameState } from "./types/game";
 import { levels, getCurrentLevel, distributeObjects } from "./levels";
 import StartMenu from "./StartMenu";
+import { MultiplayerManager } from './multiplayer';
+import type { PlayerState } from './types/multiplayer';
 
 import { joinRoom } from 'trystero'; // trystero/torrent
 
@@ -17,6 +19,7 @@ const Game: React.FC = () => {
   const blipSoundRef = useRef<HTMLAudioElement | null>(null);
   const playerRef = useRef<THREE.Mesh | null>(null);
   const collectedObjectsRef = useRef<THREE.Group | null>(null);
+  const multiplayerManagerRef = useRef<MultiplayerManager | null>(null);
   const finishedRef = useRef(false);
   const keysRef = useRef({
     ArrowUp: false,
@@ -577,6 +580,10 @@ const Game: React.FC = () => {
     camera.position.copy(player.position).add(cameraOffset);
     camera.lookAt(player.position);
 
+    if (currentLevel.multiplayer && roomRef.current) {
+      multiplayerManagerRef.current = new MultiplayerManager(roomRef.current, scene);
+    }
+
     let startTime = Date.now();
 
     // Game loop
@@ -692,6 +699,27 @@ const Game: React.FC = () => {
 
         if (distance < combinedRadius) {
           if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
+
+		if (multiplayerManagerRef.current) {
+		    // Broadcast updated state after collecting object
+		    const playerState: PlayerState = {
+		      position: [player.position.x, player.position.y, player.position.z],
+		      direction: [playerDirection.x, playerDirection.y, playerDirection.z],
+		      size: gameState.playerSize,
+		      collectedObjects: [...gameState.collectedObjects, {
+		        type: "object",
+		        size: object.userData.size,
+		        position: surfacePosition.toArray(),
+		        rotation: [0, 0, 0],
+		        scale: object.scale.x,
+		        model: "",
+		        color: "#000",
+		      }]
+		    };
+		    multiplayerManagerRef.current.broadcastPlayerState(playerState);
+		  }
+		  
+		  
             // Object collection logic
             scene.remove(object);
             const aura = auras[index];
@@ -818,9 +846,6 @@ const Game: React.FC = () => {
 	    console.log("Failed to play sound effect:", error);
 	  });
 	});
-
-
-
             cameraOffset.z = Math.max(2.5, player.scale.x * 3);
           } else {
             // Bounce off larger objects
@@ -879,6 +904,57 @@ const Game: React.FC = () => {
     renderer.render(scene, camera);
   };
 
+  if (multiplayerManagerRef.current && roomRef.current) {
+	  const playerState: PlayerState = {
+	    position: [player.position.x, player.position.y, player.position.z],
+	    direction: [playerDirection.x, playerDirection.y, playerDirection.z],
+	    size: gameState.playerSize,
+	    collectedObjects: gameState.collectedObjects
+	  };
+	  multiplayerManagerRef.current.broadcastPlayerState(playerState);
+	  
+	  // Check for object stealing opportunities
+	  const peerMeshes = multiplayerManagerRef.current.getPeerMeshes();
+	  peerMeshes.forEach((peerMesh, peerId) => {
+	    const distance = player.position.distanceTo(peerMesh.position);
+	    const combinedRadius = player.scale.x * 0.5 + peerMesh.scale.x * 0.5;
+	    
+	    if (distance < combinedRadius) {
+	      // Only larger players can steal
+	      if (gameState.playerSize > peerMesh.scale.x * 4) {
+	        multiplayerManagerRef.current.attemptSteal(peerId);
+	        
+	        // Visual feedback for steal attempt
+	        const stealEffect = new THREE.Mesh(
+	          new THREE.SphereGeometry(0.5, 32, 32),
+	          new THREE.MeshBasicMaterial({
+	            color: 0xff0000,
+	            transparent: true,
+	            opacity: 0.5
+	          })
+	        );
+	        stealEffect.position.copy(peerMesh.position);
+	        scene.add(stealEffect);
+	        
+	        // Animate and remove the effect
+	        let scale = 1;
+	        const animateEffect = () => {
+	          scale *= 1.1;
+	          stealEffect.scale.setScalar(scale);
+	          stealEffect.material.opacity *= 0.9;
+	          
+	          if (stealEffect.material.opacity > 0.1) {
+	            requestAnimationFrame(animateEffect);
+	          } else {
+	            scene.remove(stealEffect);
+	          }
+	        };
+	        animateEffect();
+	      }
+	    }
+	  });
+	}
+
   // Handle window resize
   const onWindowResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -899,6 +975,9 @@ const Game: React.FC = () => {
   return () => {
     window.removeEventListener("resize", onWindowResize);
     mountRef.current?.removeChild(renderer.domElement);
+    if (multiplayerManagerRef.current) {
+      multiplayerManagerRef.current.cleanup();
+    }
   };
 }, [currentLevelId]);
 
