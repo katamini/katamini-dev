@@ -9,7 +9,7 @@ import type { GameObject, GameState } from "./types/game";
 import { levels, getCurrentLevel, distributeObjects } from "./levels";
 import StartMenu from "./StartMenu";
 
-import { joinRoom } from 'trystero'; // trystero/torrent
+import { joinRoom } from "trystero"; // trystero/torrent
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -23,7 +23,7 @@ const Game: React.FC = () => {
     ArrowDown: false,
     ArrowLeft: false,
     ArrowRight: false,
-    Space: false
+    Space: false,
   });
 
   const touchRef = useRef({
@@ -31,7 +31,7 @@ const Game: React.FC = () => {
     startY: 0,
     lastX: 0,
     lastY: 0,
-    isDragging: false
+    isDragging: false,
   });
 
   const [currentLevelId, setCurrentLevelId] = useState<string | null>(null);
@@ -46,11 +46,16 @@ const Game: React.FC = () => {
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [remotePlayers, setRemotePlayers] = useState<{ [key: string]: any }>(
+    {}
+  );
   const [peerCount, setPeerCount] = useState(0);
   const roomRef = useRef<any>(null);
 
   const detectMobileDevice = () => {
-    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   };
 
   const loader = new GLTFLoader();
@@ -76,18 +81,18 @@ const Game: React.FC = () => {
     // handle controls on game over screen
     if (gameOver) {
       const handleKeyPress = (event: KeyboardEvent) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.key === "Enter" || event.key === " ") {
           finishedRef.current = true;
           setGameOver(true);
           setCurrentLevelId(null); // Exit to menu
         }
       };
-      window.addEventListener('keydown', handleKeyPress);
+      window.addEventListener("keydown", handleKeyPress);
       return () => {
-        window.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener("keydown", handleKeyPress);
       };
     }
-  }, [gameOver]);   
+  }, [gameOver]);
 
   const handleTouchStart = (event: React.TouchEvent) => {
     const touch = event.touches[0];
@@ -96,9 +101,9 @@ const Game: React.FC = () => {
       startY: touch.clientY,
       lastX: touch.clientX,
       lastY: touch.clientY,
-      isDragging: true
+      isDragging: true,
     };
-    console.log('Touch start', touchRef.current);
+    console.log("Touch start", touchRef.current);
   };
 
   const handleTouchMove = (event: React.TouchEvent) => {
@@ -142,7 +147,7 @@ const Game: React.FC = () => {
     touchRef.current.lastX = touch.clientX;
     touchRef.current.lastY = touch.clientY;
 
-    console.log('Touch move', { deltaX, deltaY, keys: { ...keysRef.current } });
+    console.log("Touch move", { deltaX, deltaY, keys: { ...keysRef.current } });
   };
 
   const handleTouchEnd = () => {
@@ -151,9 +156,8 @@ const Game: React.FC = () => {
     keysRef.current.ArrowDown = false;
     keysRef.current.ArrowLeft = false;
     keysRef.current.ArrowRight = false;
-    console.log('Touch end');
+    console.log("Touch end");
   };
-
 
   // Handle keyboard controls
   useEffect(() => {
@@ -162,8 +166,8 @@ const Game: React.FC = () => {
       if (event.code === "Space") {
         event.preventDefault();
       }
-       if (event.code === "Escape") {
-	finishedRef.current = true;
+      if (event.code === "Escape") {
+        finishedRef.current = true;
         setGameOver(true);
         setCurrentLevelId(null); // Exit to menu
       }
@@ -186,8 +190,11 @@ const Game: React.FC = () => {
   useEffect(() => {
     if (playerRef.current) {
       // Scale only the player geometry and its direct parts
-      playerRef.current.children.forEach(child => {
-        if (child instanceof THREE.Group && child === collectedObjectsRef.current) {
+      playerRef.current.children.forEach((child) => {
+        if (
+          child instanceof THREE.Group &&
+          child === collectedObjectsRef.current
+        ) {
           // Counter-scale the collected objects container
           child.scale.setScalar(1 / (gameState.playerSize * 0.25));
         } else {
@@ -195,7 +202,7 @@ const Game: React.FC = () => {
           child.scale.setScalar(1);
         }
       });
-      
+
       // Scale the player
       playerRef.current.scale.setScalar(gameState.playerSize * 0.25);
       playerRef.current.position.y = 0.1 * playerRef.current.scale.y;
@@ -221,54 +228,57 @@ const Game: React.FC = () => {
 
   // Music system
   useEffect(() => {
-	  let audio: HTMLAudioElement | null = null;
-	  let blipSound: HTMLAudioElement | null = null;
+    let audio: HTMLAudioElement | null = null;
+    let blipSound: HTMLAudioElement | null = null;
 
-	  const playAudio = () => {
-	    if (audio) {
-	      audio.play().catch((error) => {
-	        console.log("Failed to play audio:", error);
-	      });
-	    }
-	  };
+    const playAudio = () => {
+      if (audio) {
+        audio.play().catch((error) => {
+          console.log("Failed to play audio:", error);
+        });
+      }
+    };
 
-	  const stopAudio = () => {
-	    if (audio) {
-	      audio.pause();
-	      // audio = null;
-	    }
-	    if (blipSound) {
-	      blipSound = null;
-	    }
-	  };
+    const stopAudio = () => {
+      if (audio) {
+        audio.pause();
+        // audio = null;
+      }
+      if (blipSound) {
+        blipSound = null;
+      }
+    };
 
-	  if (currentLevelId && userInteracted) {
-	    const currentLevel = getCurrentLevel(currentLevelId);
-	    const randomBackgroundMusic = currentLevel.backgroundMusic[Math.floor(Math.random() * currentLevel.backgroundMusic.length)];
-	    audio = new Audio(randomBackgroundMusic);
-	    audio.loop = true;
-	    audio.volume = 0.4;
-	    audioRef.current = audio;
+    if (currentLevelId && userInteracted) {
+      const currentLevel = getCurrentLevel(currentLevelId);
+      const randomBackgroundMusic =
+        currentLevel.backgroundMusic[
+          Math.floor(Math.random() * currentLevel.backgroundMusic.length)
+        ];
+      audio = new Audio(randomBackgroundMusic);
+      audio.loop = true;
+      audio.volume = 0.4;
+      audioRef.current = audio;
 
-	    playAudio();
-	  }
+      playAudio();
+    }
 
-	  const handleVisibilityChange = () => {
-	    if (document.visibilityState === "visible" && userInteracted) {
-	      console.log('switch: resume playback');
-	      playAudio();
-	    } else {
-	      console.log('switch: pause playback');
-	      stopAudio();
-	    }
-	  };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && userInteracted) {
+        console.log("switch: resume playback");
+        playAudio();
+      } else {
+        console.log("switch: pause playback");
+        stopAudio();
+      }
+    };
 
-	  document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-	  return () => {
-	    document.removeEventListener("visibilitychange", handleVisibilityChange);
-	    stopAudio();
-	  };
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stopAudio();
+    };
   }, [currentLevelId, userInteracted]);
 
   // P2p Setup
@@ -276,34 +286,82 @@ const Game: React.FC = () => {
     if (currentLevelId) {
       const currentLevel = getCurrentLevel(currentLevelId);
       if (currentLevel.multiplayer) {
-	setIsMultiplayer(true);
-	const gameId = "katamini-";
-        const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, currentLevelId);
+        setIsMultiplayer(true);
+        const gameId = "katamini-";
+        const room = joinRoom(
+          { appId: gameId + currentLevel.multiplayer },
+          currentLevelId
+        );
         roomRef.current = room;
-	if (window) window.room = roomRef.current;
-	// Count current player as 1 base
+        if (window) window.room = roomRef.current;
+
+        const sendPlayerData = () => {
+          if (playerRef.current) {
+            room.send("player-data", {
+              position: playerRef.current.position.toArray(),
+              rotation: playerRef.current.rotation.toArray(),
+              collectedObjects: gameState.collectedObjects,
+            });
+          }
+        };
+
+        const sendObjectCollected = (objectId) => {
+          room.send("object-collected", objectId);
+        };
+
+        // Send player data at intervals
+        const interval = setInterval(sendPlayerData, 100);
+
         room.onPeerJoin(() => {
-		const count = Object.keys(room.getPeers()).length - 1 || 1;
-		setPeerCount( count > 0 ? count : 1 );
-	});
-        room.onPeerLeave(() => {
-		const count = Object.keys(room.getPeers()).length - 1 || 1;
-		setPeerCount( count > 0 ? count : 1 );
-	});
+          const count = Object.keys(room.getPeers()).length - 1 || 1;
+          setPeerCount(count > 0 ? count : 1);
+        });
+
+        room.onPeerLeave((peerId) => {
+          const count = Object.keys(room.getPeers()).length - 1 || 1;
+          setPeerCount(count > 0 ? count : 1);
+
+          // Remove remote player from the scene
+          const remotePlayerMesh = scene.getObjectByName(peerId);
+          if (remotePlayerMesh) {
+            scene.remove(remotePlayerMesh);
+          }
+        });
+
+        room.onMessage("player-data", (data, peerId) => {
+          setRemotePlayers((prev) => ({
+            ...prev,
+            [peerId]: data,
+          }));
+        });
+
+        room.onMessage("object-collected", (objectId) => {
+          const object = scene.getObjectByName(objectId);
+          if (object) {
+            scene.remove(object);
+          }
+        });
+
+        return () => {
+          clearInterval(interval);
+          if (roomRef.current) {
+            roomRef.current.leave();
+            roomRef.current = null;
+          }
+        };
       } else if (roomRef.current) {
-          roomRef.current.leave();
-          roomRef.current = null;
+        roomRef.current.leave();
+        roomRef.current = null;
       }
     } else {
-	setIsMultiplayer(false);
-        if (roomRef.current) {
-          roomRef.current.leave();
-          roomRef.current = null;
-	  if (window.room) window.room = null;
-        }
+      setIsMultiplayer(false);
+      if (roomRef.current) {
+        roomRef.current.leave();
+        roomRef.current = null;
+        if (window.room) window.room = null;
+      }
     }
-  }, [currentLevelId]);
-
+  }, [currentLevelId, gameState.collectedObjects]);
 
   // Main game setup and loop
   useEffect(() => {
@@ -324,7 +382,7 @@ const Game: React.FC = () => {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
     });
-      
+
     // Set the size of the renderer to the window size
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -334,7 +392,7 @@ const Game: React.FC = () => {
     } else {
       renderer.setPixelRatio(window.devicePixelRatio);
     }
-      
+
     renderer.shadowMap.enabled = true;
     mountRef.current.appendChild(renderer.domElement);
 
@@ -356,60 +414,65 @@ const Game: React.FC = () => {
     // Room setup
     let wallTexture;
 
-        let wallRepeat = [2.5, 1];
-        if (currentLevel.wallRepeat) {
-              wallRepeat = [currentLevel.wallRepeat[0], currentLevel.wallRepeat[1]];
-        }
+    let wallRepeat = [2.5, 1];
+    if (currentLevel.wallRepeat) {
+      wallRepeat = [currentLevel.wallRepeat[0], currentLevel.wallRepeat[1]];
+    }
 
-	if (currentLevel?.wallTexture) {
-	  const extension = currentLevel.wallTexture.split('.').pop()?.toLowerCase();
+    if (currentLevel?.wallTexture) {
+      const extension = currentLevel.wallTexture
+        .split(".")
+        .pop()
+        ?.toLowerCase();
 
-	  if (extension === 'mp4') {
-	    const video = document.createElement('video');
-	    video.src = currentLevel.wallTexture;
-	    video.loop = true;
-	    video.muted = true;
-	    video.play();
+      if (extension === "mp4") {
+        const video = document.createElement("video");
+        video.src = currentLevel.wallTexture;
+        video.loop = true;
+        video.muted = true;
+        video.play();
 
-	    wallTexture = new THREE.VideoTexture(video);
-	    wallTexture.wrapS = THREE.RepeatWrapping;
-	    wallTexture.wrapT = THREE.RepeatWrapping;
-            wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
+        wallTexture = new THREE.VideoTexture(video);
+        wallTexture.wrapS = THREE.RepeatWrapping;
+        wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
+      } else {
+        wallTexture = new THREE.TextureLoader().load(currentLevel.wallTexture);
+        wallTexture.wrapS = THREE.RepeatWrapping;
+        wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
+      }
+    } else {
+      wallTexture = new THREE.TextureLoader().load("textures/wall_shoji.png");
+      wallTexture.wrapS = THREE.RepeatWrapping;
+      wallTexture.wrapT = THREE.RepeatWrapping;
+      wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
+    }
 
-	  } else {
-	    wallTexture = new THREE.TextureLoader().load(currentLevel.wallTexture);
-	    wallTexture.wrapS = THREE.RepeatWrapping;
-	    wallTexture.wrapT = THREE.RepeatWrapping;
-            wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
-
-	  }
-	} else {
-	  wallTexture = new THREE.TextureLoader().load("textures/wall_shoji.png");
-	  wallTexture.wrapS = THREE.RepeatWrapping;
-	  wallTexture.wrapT = THREE.RepeatWrapping;
-          wallTexture.repeat.set(wallRepeat[0], wallRepeat[1]);
-	}
-
-	const roomSize = currentLevel.roomSize || 50;
-	const roomGeometry = new THREE.BoxGeometry(roomSize, 20, roomSize);
-	const roomMaterial = new THREE.MeshStandardMaterial({
-	  map: wallTexture,
-	  side: THREE.BackSide,
-	  roughness: 0.8,
-	  metalness: 0.0,
-	});
-     const room = new THREE.Mesh(roomGeometry, roomMaterial);
-     room.position.y = 10;
-     scene.add(room);
-
+    const roomSize = currentLevel.roomSize || 50;
+    const roomGeometry = new THREE.BoxGeometry(roomSize, 20, roomSize);
+    const roomMaterial = new THREE.MeshStandardMaterial({
+      map: wallTexture,
+      side: THREE.BackSide,
+      roughness: 0.8,
+      metalness: 0.0,
+    });
+    const room = new THREE.Mesh(roomGeometry, roomMaterial);
+    room.position.y = 10;
+    scene.add(room);
 
     // Floor setup
-    const floorTexture = new THREE.TextureLoader().load(currentLevel.floorTexture || "textures/floor_carpet.jpg");
+    const floorTexture = new THREE.TextureLoader().load(
+      currentLevel.floorTexture || "textures/floor_carpet.jpg"
+    );
     floorTexture.wrapS = THREE.RepeatWrapping;
     floorTexture.wrapT = THREE.RepeatWrapping;
 
     if (currentLevel.floorRepeat) {
-      floorTexture.repeat.set(currentLevel.floorRepeat[0], currentLevel.floorRepeat[1]);
+      floorTexture.repeat.set(
+        currentLevel.floorRepeat[0],
+        currentLevel.floorRepeat[1]
+      );
     } else {
       floorTexture.repeat.set(20, 20); // Default repeat values
     }
@@ -504,8 +567,8 @@ const Game: React.FC = () => {
             if ((child as THREE.Mesh).isMesh) {
               (child as THREE.Mesh).castShadow = true;
               (child as THREE.Mesh).receiveShadow = true;
-	      if (obj.color){ 
-		(child as THREE.Mesh).material.color.set(obj.color) 
+              if (obj.color) {
+                (child as THREE.Mesh).material.color.set(obj.color);
               }
             }
           });
@@ -513,7 +576,11 @@ const Game: React.FC = () => {
           objects.push(model);
 
           // Create aura
-          const auraGeometry = new THREE.SphereGeometry(obj.size * 0.15, 32, 32);
+          const auraGeometry = new THREE.SphereGeometry(
+            obj.size * 0.15,
+            32,
+            32
+          );
           const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
           auraMesh.scale.multiplyScalar(1.2);
           auraMesh.visible = false;
@@ -546,7 +613,11 @@ const Game: React.FC = () => {
           objects.push(mesh);
 
           // Create aura for fallback object
-          const auraGeometry = new THREE.SphereGeometry(obj.size * 0.15, 32, 32);
+          const auraGeometry = new THREE.SphereGeometry(
+            obj.size * 0.15,
+            32,
+            32
+          );
           const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial.clone());
           auraMesh.scale.multiplyScalar(1.2);
           auraMesh.visible = false;
@@ -582,25 +653,28 @@ const Game: React.FC = () => {
     // Game loop
     let time = 0;
     const animate = () => {
-        
       time += 0.016;
 
       if (finishedRef.current) {
-        console.log('game over!');
+        console.log("game over!");
         return;
       } else {
         requestAnimationFrame(animate);
       }
-        
+
       // Update time elapsed
       if (!finishedRef.current) {
         const currentTime = Date.now();
         const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-        setGameState(prev => ({ ...prev, timeElapsed: elapsedSeconds }));
+        setGameState((prev) => ({ ...prev, timeElapsed: elapsedSeconds }));
       }
 
       // Check if all objects are captured
-      if (totalObjects + objects.length === 0 && totalObjects != 0 && !finishedRef.current) {
+      if (
+        totalObjects + objects.length === 0 &&
+        totalObjects != 0 &&
+        !finishedRef.current
+      ) {
         console.log("Game Completed!", time, gameState, objects.length);
         finishedRef.current = true;
         audioRef.current?.pause();
@@ -618,384 +692,487 @@ const Game: React.FC = () => {
       // Find the smallest remaining object
       const smallestObject = objects.reduce(
         (smallest, obj) => {
-        if (obj.parent === scene && obj.userData.size < smallest.userData.size) {
-          return obj;
-        }
-        return smallest;
-      },
-      { userData: { size: Infinity } }
-    );
+          if (
+            obj.parent === scene &&
+            obj.userData.size < smallest.userData.size
+          ) {
+            return obj;
+          }
+          return smallest;
+        },
+        { userData: { size: Infinity } }
+      );
 
-    // Update aura uniforms and visibility
-    objects.forEach((object, index) => {
-      if (object.parent === scene) {
-        const aura = auras[index];
-        if (aura) {
-          aura.material.uniforms.time.value = time;
-          aura.visible =
-            object.userData.size <=
-            Math.max(gameState.playerSize * 1.2, smallestObject.userData.size);
-        }
-      }
-    });
-
-    // Player movement using keysRef
-    const moveDirection = new THREE.Vector3();
-    if (keysRef.current.ArrowUp) moveDirection.z -= 1;
-    if (keysRef.current.ArrowDown) moveDirection.z += 1;
-    
-    if (keysRef.current.ArrowLeft) {
-      playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed);
-    }
-    if (keysRef.current.ArrowRight) {
-      playerDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed);
-    }
-
-    let dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.6);  // Increased scaling factor
-    const dynamicAcceleration = acceleration * (1 + gameState.playerSize * 0.4);  // Add dynamic acceleration
-    playerVelocity.add(
-      playerDirection.clone().multiplyScalar(moveDirection.z * dynamicAcceleration)
-    );
-
-    playerVelocity.y -= gravity;
-
-    isGrounded = player.position.y <= player.scale.y * 0.5;
-    if (isGrounded) {
-      player.position.y = player.scale.y * 0.5;
-      playerVelocity.y = Math.max(0, playerVelocity.y);
-    }
-
-    if (keysRef.current.Space && isGrounded) {
-      playerVelocity.y = jumpForce;
-    }
-
-    // Apply friction and limit speed
-    playerVelocity.multiplyScalar(friction);
-    
-    if (isMobileDevice) { dynamicMaxSpeed = dynamicMaxSpeed * 2; }
-    if (playerVelocity.length() > dynamicMaxSpeed) {
-      playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
-    }
-
-    // Calculate next position
-    const nextPosition = player.position.clone().add(playerVelocity);
-    const halfRoomSize = (roomSize / 2) - 0.15; // Room size minus bits
-    nextPosition.x = Math.max(-halfRoomSize, Math.min(halfRoomSize, nextPosition.x));
-    nextPosition.z = Math.max(-halfRoomSize, Math.min(halfRoomSize, nextPosition.z));
-
-    // Check collisions with objects
-    let collisionOccurred = false;
-    objects.forEach((object, index) => {
-      if (object.parent === scene) {
-        const distance = nextPosition.distanceTo(object.position);
-        const combinedRadius = player.scale.x * 0.5 + object.userData.size * 0.05;
-
-        if (distance < combinedRadius) {
-          if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
-            // Object collection logic
-            scene.remove(object);
-            const aura = auras[index];
-            if (aura) {
-              aura.visible = false;
-              aura.parent?.remove(aura);
-            }
-            totalObjects--;
-
-            // Position on sphere surface
-            const u = Math.random();
-            const v = Math.random();
-            const radius = player.scale.x * 0.5;
-
-            const theta = 2 * Math.PI * u;
-            const phi = Math.acos(2 * v - 1);
-
-            const surfacePosition = new THREE.Vector3(
-              radius * Math.sin(phi) * Math.cos(theta),
-              radius * Math.sin(phi) * Math.sin(theta),
-              radius * Math.cos(phi)
-            );
-
-            object.userData.initialPosition = {
-              theta: theta,
-              phi: phi,
-              radius: radius,
-            };
-
-            object.position.copy(surfacePosition);
-            surfacePosition.add(
-              new THREE.Vector3(
-                (Math.random() - 0.5) * 0.05,
-                (Math.random() - 0.5) * 0.05,
-                (Math.random() - 0.5) * 0.05
-              ).multiplyScalar(player.scale.x)
-            );
-
-            const scaleFactor = Math.min(1.2, object.userData.size / gameState.playerSize);
-            object.scale.multiplyScalar(scaleFactor * 0.8);
-            collectedObjectsContainer.add(object);  
-
-            if (blipSoundRef.current) {
-              blipSoundRef.current.play().catch((error) => {
-                console.log("Failed to play blip sound:", error);
-              });
-            }
-
-            // Update game state
-            setGameState((prev) => {
-              const currentClass = sizeTiers[prev.currentClass];
-              const objectsInClass = prev.collectedObjects.filter(
-                (obj) => obj.size >= currentClass.min && obj.size <= currentClass.max
+      // Update aura uniforms and visibility
+      objects.forEach((object, index) => {
+        if (object.parent === scene) {
+          const aura = auras[index];
+          if (aura) {
+            aura.material.uniforms.time.value = time;
+            aura.visible =
+              object.userData.size <=
+              Math.max(
+                gameState.playerSize * 1.2,
+                smallestObject.userData.size
               );
-
-              const allObjectsInClassCaptured =
-                objectsInClass.length + 1 >= currentClass.requiredCount;
-
-              let newPlayerSize = prev.playerSize;
-              let newClass = prev.currentClass;
-
-              if (allObjectsInClassCaptured && prev.currentClass < sizeTiers.length - 1) {
-                newClass += 1;
-                newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
-                console.log('roomba upgraded', newPlayerSize);
-
-                playRandomSound([
-                  "music/effects/01.mp3",
-                  "music/effects/03.mp3",
-                  "music/effects/04.mp3",
-                ]);
-              }
-
-              return {
-                ...prev,
-                playerSize: newPlayerSize,
-                currentClass: newClass,
-                collectedObjects: [
-                  ...prev.collectedObjects,
-                  {
-                    type: "object",
-                    size: object.userData.size,
-                    position: surfacePosition.toArray(),
-                    rotation: [0, 0, 0],
-                    scale: object.scale.x,
-                    model: "",
-                    color: "#000",
-                  },
-                ],
-              };
-            });
-
-            player.position.y = 0.1 * player.scale.y;
-
-        // Update collected objects positions
-        let soundEffect; 
-	soundEffect = new Audio("music/blips/0" + randoSeed(1, 9) + ".mp3");
-	soundEffect.volume = 0.2;
-
-	collectedObjectsContainer.children.forEach((child: THREE.Object3D) => {
-	  if (child.userData.size < gameState.playerSize * 0.08) {
-	    collectedObjectsContainer.remove(child);
-	    return;
-	  }
-	
-	  const initialPos = child.userData.initialPosition;
-	  const currentRadius = player.scale.x * 0.5;
-	  const movementAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
-	  const rotationSpeed = playerVelocity.length() * 2;
-	  const rotatedTheta = initialPos.theta + movementAngle * rotationSpeed;
-	
-	  child.position.set(
-	    currentRadius * Math.sin(initialPos.phi) * Math.cos(rotatedTheta),
-	    currentRadius * Math.sin(initialPos.phi) * Math.sin(rotatedTheta),
-	    currentRadius * Math.cos(initialPos.phi)
-	  );
-	
-	  // Play sound effect for the collected object
-	  const currentLevel = getCurrentLevel(currentLevelId);
-	  const collectedObjectSound = currentLevel.gameObjects.find(obj => obj.type === child.userData.type)?.sound;
- 	  if(collectedObjectSound) soundEffect = new Audio(collectedObjectSound);
-	
-	  soundEffect.play().catch((error) => {
-	    console.log("Failed to play sound effect:", error);
-	  });
-	});
-
-
-
-            cameraOffset.z = Math.max(2.5, player.scale.x * 3);
-          } else {
-            // Bounce off larger objects
-            collisionOccurred = true;
-            const pushDirection = nextPosition
-              .clone()
-              .sub(object.position)
-              .normalize();
-            playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
-
-            // Squish effect
-            player.scale.x *= 0.95;
-            player.scale.z *= 1.05;
-            setTimeout(() => {
-              player.scale.x /= 0.95;
-              player.scale.z /= 1.05;
-            }, 100);
           }
         }
+      });
+
+      // Player movement using keysRef
+      const moveDirection = new THREE.Vector3();
+      if (keysRef.current.ArrowUp) moveDirection.z -= 1;
+      if (keysRef.current.ArrowDown) moveDirection.z += 1;
+
+      if (keysRef.current.ArrowLeft) {
+        playerDirection.applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          rotationSpeed
+        );
+      }
+      if (keysRef.current.ArrowRight) {
+        playerDirection.applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          -rotationSpeed
+        );
+      }
+
+      let dynamicMaxSpeed = maxSpeed * (1 + gameState.playerSize * 0.6); // Increased scaling factor
+      const dynamicAcceleration =
+        acceleration * (1 + gameState.playerSize * 0.4); // Add dynamic acceleration
+      playerVelocity.add(
+        playerDirection
+          .clone()
+          .multiplyScalar(moveDirection.z * dynamicAcceleration)
+      );
+
+      playerVelocity.y -= gravity;
+
+      isGrounded = player.position.y <= player.scale.y * 0.5;
+      if (isGrounded) {
+        player.position.y = player.scale.y * 0.5;
+        playerVelocity.y = Math.max(0, playerVelocity.y);
+      }
+
+      if (keysRef.current.Space && isGrounded) {
+        playerVelocity.y = jumpForce;
+      }
+
+      // Apply friction and limit speed
+      playerVelocity.multiplyScalar(friction);
+
+      if (isMobileDevice) {
+        dynamicMaxSpeed = dynamicMaxSpeed * 2;
+      }
+      if (playerVelocity.length() > dynamicMaxSpeed) {
+        playerVelocity.normalize().multiplyScalar(dynamicMaxSpeed);
+      }
+
+      // Calculate next position
+      const nextPosition = player.position.clone().add(playerVelocity);
+      const halfRoomSize = roomSize / 2 - 0.15; // Room size minus bits
+      nextPosition.x = Math.max(
+        -halfRoomSize,
+        Math.min(halfRoomSize, nextPosition.x)
+      );
+      nextPosition.z = Math.max(
+        -halfRoomSize,
+        Math.min(halfRoomSize, nextPosition.z)
+      );
+
+      // Check collisions with objects
+      // Check collisions with objects
+      let collisionOccurred = false;
+      objects.forEach((object, index) => {
+        if (object.parent === scene) {
+          const distance = nextPosition.distanceTo(object.position);
+          const combinedRadius =
+            player.scale.x * 0.5 + object.userData.size * 0.05;
+
+          if (distance < combinedRadius) {
+            if (
+              object.userData.size <=
+              Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)
+            ) {
+              // Object collection logic
+              scene.remove(object);
+
+              // Send message to other players
+              if (roomRef.current) {
+                roomRef.current.send("object-collected", object.uuid);
+              }
+
+              const aura = auras[index];
+              if (aura) {
+                aura.visible = false;
+                aura.parent?.remove(aura);
+              }
+              totalObjects--;
+
+              // Position on sphere surface
+              const u = Math.random();
+              const v = Math.random();
+              const radius = player.scale.x * 0.5;
+
+              const theta = 2 * Math.PI * u;
+              const phi = Math.acos(2 * v - 1);
+
+              const surfacePosition = new THREE.Vector3(
+                radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.sin(phi) * Math.sin(theta),
+                radius * Math.cos(phi)
+              );
+
+              object.userData.initialPosition = {
+                theta: theta,
+                phi: phi,
+                radius: radius,
+              };
+
+              object.position.copy(surfacePosition);
+              surfacePosition.add(
+                new THREE.Vector3(
+                  (Math.random() - 0.5) * 0.05,
+                  (Math.random() - 0.5) * 0.05,
+                  (Math.random() - 0.5) * 0.05
+                ).multiplyScalar(player.scale.x)
+              );
+
+              const scaleFactor = Math.min(
+                1.2,
+                object.userData.size / gameState.playerSize
+              );
+              object.scale.multiplyScalar(scaleFactor * 0.8);
+              collectedObjectsContainer.add(object);
+
+              if (blipSoundRef.current) {
+                blipSoundRef.current.play().catch((error) => {
+                  console.log("Failed to play blip sound:", error);
+                });
+              }
+
+              // Update game state
+              setGameState((prev) => {
+                const currentClass = sizeTiers[prev.currentClass];
+                const objectsInClass = prev.collectedObjects.filter(
+                  (obj) =>
+                    obj.size >= currentClass.min && obj.size <= currentClass.max
+                );
+
+                const allObjectsInClassCaptured =
+                  objectsInClass.length + 1 >= currentClass.requiredCount;
+
+                let newPlayerSize = prev.playerSize;
+                let newClass = prev.currentClass;
+
+                if (
+                  allObjectsInClassCaptured &&
+                  prev.currentClass < sizeTiers.length - 1
+                ) {
+                  newClass += 1;
+                  newPlayerSize = prev.playerSize * 1.8; // More aggressive growth
+                  console.log("roomba upgraded", newPlayerSize);
+
+                  playRandomSound([
+                    "music/effects/01.mp3",
+                    "music/effects/03.mp3",
+                    "music/effects/04.mp3",
+                  ]);
+                }
+
+                return {
+                  ...prev,
+                  playerSize: newPlayerSize,
+                  currentClass: newClass,
+                  collectedObjects: [
+                    ...prev.collectedObjects,
+                    {
+                      type: "object",
+                      size: object.userData.size,
+                      position: surfacePosition.toArray(),
+                      rotation: [0, 0, 0],
+                      scale: object.scale.x,
+                      model: "",
+                      color: "#000",
+                    },
+                  ],
+                };
+              });
+
+              player.position.y = 0.1 * player.scale.y;
+
+              // Update collected objects positions
+              collectedObjectsContainer.children.forEach(
+                (child: THREE.Object3D) => {
+                  if (child.userData.size < gameState.playerSize * 0.08) {
+                    collectedObjectsContainer.remove(child);
+                    return;
+                  }
+
+                  const initialPos = child.userData.initialPosition;
+                  const currentRadius = player.scale.x * 0.5;
+                  const movementAngle = Math.atan2(
+                    playerVelocity.x,
+                    playerVelocity.z
+                  );
+                  const rotationSpeed = playerVelocity.length() * 2;
+                  const rotatedTheta =
+                    initialPos.theta + movementAngle * rotationSpeed;
+
+                  child.position.set(
+                    currentRadius *
+                      Math.sin(initialPos.phi) *
+                      Math.cos(rotatedTheta),
+                    currentRadius *
+                      Math.sin(initialPos.phi) *
+                      Math.sin(rotatedTheta),
+                    currentRadius * Math.cos(initialPos.phi)
+                  );
+                }
+              );
+
+              cameraOffset.z = Math.max(2.5, player.scale.x * 3);
+            } else {
+              // Bounce off larger objects
+              collisionOccurred = true;
+              const pushDirection = nextPosition
+                .clone()
+                .sub(object.position)
+                .normalize();
+              playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
+
+              // Squish effect
+              player.scale.x *= 0.95;
+              player.scale.z *= 1.05;
+              setTimeout(() => {
+                player.scale.x /= 0.95;
+                player.scale.z /= 1.05;
+              }, 100);
+            }
+          }
+        }
+      });
+
+      // Update player position
+      if (!collisionOccurred) {
+        player.position.copy(nextPosition);
+      } else {
+        player.position.add(playerVelocity);
+      }
+
+      // Ensure player stays above ground
+      player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
+
+      // Update camera
+      const zoomFactor = currentLevel.zoom || 4; // Increased zoom factor
+      const targetZoom = THREE.MathUtils.clamp(
+        player.scale.x * zoomFactor,
+        minZoom,
+        maxZoom
+      );
+
+      currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1);
+      cameraOffset.z = currentZoom;
+
+      // Adjust camera height based on zoom level
+      cameraOffset.y = Math.max(2, currentZoom * 0.3); // Camera height scales with zoom
+
+      const idealOffset = cameraOffset
+        .clone()
+        .applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          Math.atan2(playerDirection.x, playerDirection.z)
+        );
+      camera.position.lerp(player.position.clone().add(idealOffset), 0.1);
+      camera.lookAt(player.position);
+
+      renderer.render(scene, camera);
+    };
+
+    // Multiplayer Handlers
+    Object.keys(remotePlayers).forEach((peerId) => {
+      let remotePlayer = remotePlayers[peerId];
+      if (!scene.getObjectByName(peerId)) {
+        // Create and add remote player to the scene
+        const remotePlayerGeometry = new THREE.CylinderGeometry(
+          0.5,
+          0.5,
+          0.2,
+          32
+        );
+        const remotePlayerMaterial = new THREE.MeshStandardMaterial({
+          color: 0x303030,
+          roughness: 0.7,
+          metalness: 0.3,
+        });
+        const remotePlayerMesh = new THREE.Mesh(
+          remotePlayerGeometry,
+          remotePlayerMaterial
+        );
+        remotePlayerMesh.name = peerId;
+
+        // Roomba details for remote player
+        const topDisc = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
+          new THREE.MeshStandardMaterial({ color: 0x404040 })
+        );
+        topDisc.position.y = 0.1;
+        remotePlayerMesh.add(topDisc);
+
+        const sensorBump = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
+          new THREE.MeshStandardMaterial({ color: 0x202020 })
+        );
+        sensorBump.position.set(0, 0.15, 0.3);
+        remotePlayerMesh.add(sensorBump);
+
+        remotePlayerMesh.scale.setScalar(0.25);
+        remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
+        remotePlayerMesh.castShadow = true;
+        remotePlayerMesh.receiveShadow = true;
+        scene.add(remotePlayerMesh);
+      } else {
+        // Update remote player position and rotation
+        const remotePlayerMesh = scene.getObjectByName(peerId);
+        remotePlayerMesh.position.set(...remotePlayer.position);
+        remotePlayerMesh.rotation.set(...remotePlayer.rotation);
       }
     });
 
-    // Update player position
-    if (!collisionOccurred) {
-      player.position.copy(nextPosition);
-    } else {
-      player.position.add(playerVelocity);
-    }
+    // Handle window resize
+    const onWindowResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (isMobileDevice) {
+        renderer.setPixelRatio(window.devicePixelRatio / 2);
+      } else {
+        renderer.setPixelRatio(window.devicePixelRatio);
+      }
+    };
+    window.addEventListener("resize", onWindowResize);
 
-    // Ensure player stays above ground
-    player.position.y = Math.max(player.scale.y * 0.5, player.position.y);
+    // Start animation
+    if (!finishedRef.current) animate();
 
-    // Update camera
-    const zoomFactor = currentLevel.zoom || 4; // Increased zoom factor
-    const targetZoom = THREE.MathUtils.clamp(
-      player.scale.x * zoomFactor, 
-      minZoom, 
-      maxZoom
-    );
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", onWindowResize);
+      mountRef.current?.removeChild(renderer.domElement);
+    };
+  }, [currentLevelId]);
 
-    currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.1);
-    cameraOffset.z = currentZoom;
-
-    // Adjust camera height based on zoom level
-    cameraOffset.y = Math.max(2, currentZoom * 0.3); // Camera height scales with zoom
-
-    const idealOffset = cameraOffset
-      .clone()
-      .applyAxisAngle(
-        new THREE.Vector3(0, 1, 0),
-        Math.atan2(playerDirection.x, playerDirection.z)
-      );
-    camera.position.lerp(player.position.clone().add(idealOffset), 0.1);
-    camera.lookAt(player.position);
-
-    renderer.render(scene, camera);
+  const touchpadStyles = {
+    position: "fixed" as const,
+    bottom: "40px",
+    right: "40px",
+    width: "120px",
+    height: "120px",
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderRadius: "50%",
+    border: "3px solid rgba(255, 255, 255, 0.8)",
+    zIndex: 1000,
+    touchAction: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    userSelect: "none" as const,
   };
 
-  // Handle window resize
-  const onWindowResize = () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    if (isMobileDevice) {
-      renderer.setPixelRatio(window.devicePixelRatio / 2);
-    } else {
-      renderer.setPixelRatio(window.devicePixelRatio);
-    }
+  const centerDotStyles = {
+    width: "30px",
+    height: "30px",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: "50%",
+    border: "2px solid rgba(255, 255, 255, 1)",
   };
-  window.addEventListener("resize", onWindowResize);
 
-  // Start animation
-  if (!finishedRef.current) animate();
-
-  // Cleanup
-  return () => {
-    window.removeEventListener("resize", onWindowResize);
-    mountRef.current?.removeChild(renderer.domElement);
+  const handleLevelSelect = (levelId: string) => {
+    setCurrentLevelId(levelId);
+    setGameState({
+      playerSize: 0.5,
+      collectedObjects: [],
+      timeElapsed: 0,
+      currentClass: 0,
+    });
+    setGameOver(false);
+    finishedRef.current = false;
   };
-}, [currentLevelId]);
 
-const touchpadStyles = {
-  position: 'fixed' as const,
-  bottom: '40px',
-  right: '40px',
-  width: '120px',
-  height: '120px',
-  backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  borderRadius: '50%',
-  border: '3px solid rgba(255, 255, 255, 0.8)',
-  zIndex: 1000,
-  touchAction: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  userSelect: 'none' as const
-};
-
-const centerDotStyles = {
-  width: '30px',
-  height: '30px',
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  borderRadius: '50%',
-  border: '2px solid rgba(255, 255, 255, 1)'
-};
-
-const handleLevelSelect = (levelId: string) => {
-  setCurrentLevelId(levelId);
-  setGameState({
-    playerSize: 0.5,
-    collectedObjects: [],
-    timeElapsed: 0,
-    currentClass: 0,
-  });
-  setGameOver(false);
-  finishedRef.current = false;
-};
-
-return (
-  <>
-    {!currentLevelId ? (
-      <StartMenu onSelectLevel={handleLevelSelect} />
-    ) : (
-      <>
-        <div ref={mountRef} />
-        <SizeIndicator size={gameState.playerSize} time={gameState.timeElapsed} />
-        <audio ref={audioRef} />
-        <audio ref={blipSoundRef} />
-        {gameOver && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
-            <div className="bg-white p-8 rounded-lg text-center">
-              <h1 className="text-3xl font-bold mb-4 rainbow_text_animated"><b>Congratulations!</b></h1>
-              <p className="text-xl mb-2">You vacuumed all the objects!</p>
-              <p className="text-lg">
-                Final size: {Math.floor(gameState.playerSize)} cm{" "}
-                {Math.floor((gameState.playerSize % 1) * 10)} mm
-              </p>
-              <p className="text-lg">
-                Time: {Math.floor(gameState.timeElapsed / 60)}m{" "}
-                {gameState.timeElapsed % 60}s
-              </p>
-              <br />
-              <button type="button" onClick={() => setCurrentLevelId(null)}>
-                <span className="rainbow rainbow_text_animated text-lg">RETURN TO MENU</span>
-              </button>
-              <br />
-              <img src="https://i.imgur.com/n1lfojs.gif" />
+  return (
+    <>
+      {!currentLevelId ? (
+        <StartMenu onSelectLevel={handleLevelSelect} />
+      ) : (
+        <>
+          <div ref={mountRef} />
+          <SizeIndicator
+            size={gameState.playerSize}
+            time={gameState.timeElapsed}
+          />
+          <audio ref={audioRef} />
+          <audio ref={blipSoundRef} />
+          {gameOver && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
+              <div className="bg-white p-8 rounded-lg text-center">
+                <h1 className="text-3xl font-bold mb-4 rainbow_text_animated">
+                  <b>Congratulations!</b>
+                </h1>
+                <p className="text-xl mb-2">You vacuumed all the objects!</p>
+                <p className="text-lg">
+                  Final size: {Math.floor(gameState.playerSize)} cm{" "}
+                  {Math.floor((gameState.playerSize % 1) * 10)} mm
+                </p>
+                <p className="text-lg">
+                  Time: {Math.floor(gameState.timeElapsed / 60)}m{" "}
+                  {gameState.timeElapsed % 60}s
+                </p>
+                <br />
+                <button type="button" onClick={() => setCurrentLevelId(null)}>
+                  <span className="rainbow rainbow_text_animated text-lg">
+                    RETURN TO MENU
+                  </span>
+                </button>
+                <br />
+                <img src="https://i.imgur.com/n1lfojs.gif" />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {isMobileDevice && (
-          <div 
-            style={touchpadStyles}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
-          >
-            <div style={centerDotStyles} />
-          </div>
-        )}
-	{isMultiplayer && (
-	<div style={{ position: 'fixed', bottom: '10px', right: '10px', backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '5px', borderRadius: '5px' }}>
-	  {`Players: ${peerCount + 1}`}
-	</div>
-	)}
-      </>
-    )}
-  </>
-);
+          {isMobileDevice && (
+            <div
+              style={touchpadStyles}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+            >
+              <div style={centerDotStyles} />
+            </div>
+          )}
+          {isMultiplayer && (
+            <div
+              style={{
+                position: "fixed",
+                bottom: "10px",
+                right: "10px",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                color: "white",
+                padding: "5px",
+                borderRadius: "5px",
+              }}
+            >
+              {`Players: ${peerCount + 1}`}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 };
 
 const refreshPage = () => {
-  window.location.reload(); 
+  window.location.reload();
 };
 
 export default Game;
