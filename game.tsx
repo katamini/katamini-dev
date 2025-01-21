@@ -282,8 +282,14 @@ const Game: React.FC = () => {
         roomRef.current = room;
 	if (window) window.room = roomRef.current;
 	// Count current player as 1 base
-        room.onPeerJoin(() => setPeerCount( Object.keys(room.getPeers()).length - 1 || 1 ));
-        room.onPeerLeave(() => setPeerCount( Object.keys(room.getPeers()).length - 1 || 1 ));
+        room.onPeerJoin(() => {
+		const count = Object.keys(room.getPeers()).length -1;
+		setPeerCount( Object.keys(count > 0 ? count : 1 )
+	});
+        room.onPeerLeave(() => {
+		const count = Object.keys(room.getPeers()).length -1;
+		setPeerCount( Object.keys(count > 0 ? count : 1 )
+	});
       } else if (roomRef.current) {
           roomRef.current.leave();
           roomRef.current = null;
