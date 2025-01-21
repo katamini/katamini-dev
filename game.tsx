@@ -283,12 +283,12 @@ const Game: React.FC = () => {
 	if (window) window.room = roomRef.current;
 	// Count current player as 1 base
         room.onPeerJoin(() => {
-		const count = Object.keys(room.getPeers()).length -1;
-		setPeerCount( Object.keys(count > 0 ? count : 1 )
+		const count = Object.keys(room.getPeers()).length - 1 || 1;
+		setPeerCount( count > 0 ? count : 1 );
 	});
         room.onPeerLeave(() => {
-		const count = Object.keys(room.getPeers()).length -1;
-		setPeerCount( Object.keys(count > 0 ? count : 1 )
+		const count = Object.keys(room.getPeers()).length - 1 || 1;
+		setPeerCount( count > 0 ? count : 1 );
 	});
       } else if (roomRef.current) {
           roomRef.current.leave();
