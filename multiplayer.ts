@@ -14,45 +14,50 @@ export interface MultiplayerState {
   [peerId: string]: PlayerState;
 }
 
+const BROADCAST_RATE = 50; // 20 updates per second
+const PEER_COLOR = 0x6495ED; // Cornflower blue for other players
+const PEER_TOP_COLOR = 0x4169E1; // Royal blue for peer top disc
+const PEER_SENSOR_COLOR = 0x1E90FF; // Dodger blue for peer sensor
+
 export class MultiplayerManager {
   private room: Room;
-  private peers: Map<string, THREE.Mesh> = new Map();
+  private peers: Map<string, THREE.Group> = new Map();
   private peerStates: Map<string, PlayerState> = new Map();
   private scene: THREE.Scene;
+  private lastBroadcastTime: number = 0;
+  private onObjectCollectedCallback: ((objectId: string) => void) | null = null;
+  
+  // Trystero action functions
   private sendPlayerState: (state: PlayerState) => void;
   private getPlayerState: (callback: (state: PlayerState, peerId: string) => void) => void;
   private sendObjectCollected: (objectId: string) => void;
   private getObjectCollected: (callback: (objectId: string, peerId: string) => void) => void;
-  private onObjectCollectedCallback: ((objectId: string) => void) | null = null;
 
   constructor(room: Room, scene: THREE.Scene) {
     this.room = room;
     this.scene = scene;
+    this.lastBroadcastTime = Date.now();
     
-    // Set up P2P actions
+    // Initialize P2P actions
     [this.sendPlayerState, this.getPlayerState] = room.makeAction('playerState');
-    [this.sendObjectCollected, this.getObjectCollected] = room.makeAction('playerObj');
+    [this.sendObjectCollected, this.getObjectCollected] = room.makeAction('objectCollected');
 
-    // Handle peer joins/leaves
+    // Set up peer event handlers
     room.onPeerJoin((peerId) => this.handlePeerJoin(peerId));
     room.onPeerLeave((peerId) => this.handlePeerLeave(peerId));
 
-    // Listen for player states
+    // Set up state update handler
     this.getPlayerState((state, peerId) => {
       this.peerStates.set(peerId, state);
       this.updatePeerState(state, peerId);
     });
     
-    // Listen for object collections
+    // Set up object collection handler
     this.getObjectCollected((objectId, peerId) => {
       if (this.onObjectCollectedCallback) {
         this.onObjectCollectedCallback(objectId);
       }
     });
-  }
-
-  public setOnObjectCollected(callback: (objectId: string) => void) {
-    this.onObjectCollectedCallback = callback;
   }
 
   private createPeerMesh(): THREE.Group {
@@ -61,7 +66,7 @@ export class MultiplayerManager {
     // Create base roomba
     const baseGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
     const baseMaterial = new THREE.MeshStandardMaterial({
-      color: 0x6495ED,
+      color: PEER_COLOR,
       roughness: 0.7,
       metalness: 0.3,
     });
@@ -70,17 +75,18 @@ export class MultiplayerManager {
     base.receiveShadow = true;
     peerGroup.add(base);
     
-    // Add roomba details
+    // Add top disc
     const topDisc = new THREE.Mesh(
       new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
-      new THREE.MeshStandardMaterial({ color: 0x4169E1 })
+      new THREE.MeshStandardMaterial({ color: PEER_TOP_COLOR })
     );
     topDisc.position.y = 0.1;
     base.add(topDisc);
 
+    // Add sensor bump
     const sensorBump = new THREE.Mesh(
       new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
-      new THREE.MeshStandardMaterial({ color: 0x1E90FF })
+      new THREE.MeshStandardMaterial({ color: PEER_SENSOR_COLOR })
     );
     sensorBump.position.set(0, 0.15, 0.3);
     base.add(sensorBump);
@@ -115,26 +121,26 @@ export class MultiplayerManager {
 
   private updatePeerState(state: PlayerState, peerId: string) {
     const peerMesh = this.peers.get(peerId);
-    if (peerMesh) {
-      // Update position with smooth lerp
-      const targetPosition = new THREE.Vector3(...state.position);
-      peerMesh.position.lerp(targetPosition, 0.1);
-      
-      // Update rotation based on direction
-      const direction = new THREE.Vector3(...state.direction);
-      if (direction.length() > 0) {
-        const lookAtPoint = peerMesh.position.clone().add(direction);
-        peerMesh.lookAt(lookAtPoint);
-      }
-      
-      // Update size with proper scaling
-      const targetScale = state.size * 0.25;
-      peerMesh.scale.setScalar(targetScale);
-      peerMesh.position.y = 0.1 * peerMesh.scale.y;
+    if (!peerMesh) return;
 
-      // Update collected objects visualization
-      this.updatePeerCollectedObjects(peerMesh, state.collectedObjects);
+    // Update position with smooth lerp
+    const targetPosition = new THREE.Vector3(...state.position);
+    peerMesh.position.lerp(targetPosition, 0.1);
+    
+    // Update rotation based on direction
+    const direction = new THREE.Vector3(...state.direction);
+    if (direction.length() > 0) {
+      const lookAtPoint = peerMesh.position.clone().add(direction);
+      peerMesh.lookAt(lookAtPoint);
     }
+    
+    // Update size with proper scaling
+    const targetScale = state.size * 0.25;
+    peerMesh.scale.setScalar(targetScale);
+    peerMesh.position.y = 0.1 * peerMesh.scale.y;
+
+    // Update collected objects visualization
+    this.updatePeerCollectedObjects(peerMesh, state.collectedObjects);
   }
 
   private updatePeerCollectedObjects(peerMesh: THREE.Object3D, collectedObjects: GameObject[]) {
@@ -171,14 +177,27 @@ export class MultiplayerManager {
   }
 
   public broadcastPlayerState(state: PlayerState) {
+    const currentTime = Date.now();
+    if (currentTime - this.lastBroadcastTime >= BROADCAST_RATE) {
+      this.sendPlayerState(state);
+      this.lastBroadcastTime = currentTime;
+    }
+  }
+
+  public forceBroadcastPlayerState(state: PlayerState) {
     this.sendPlayerState(state);
+    this.lastBroadcastTime = Date.now();
   }
 
   public broadcastObjectCollected(objectId: string) {
     this.sendObjectCollected(objectId);
   }
 
-  public getPeerMeshes(): Map<string, THREE.Mesh> {
+  public setOnObjectCollected(callback: (objectId: string) => void) {
+    this.onObjectCollectedCallback = callback;
+  }
+
+  public getPeerMeshes(): Map<string, THREE.Group> {
     return this.peers;
   }
 
@@ -192,5 +211,6 @@ export class MultiplayerManager {
     });
     this.peers.clear();
     this.peerStates.clear();
+    this.onObjectCollectedCallback = null;
   }
 }
