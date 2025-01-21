@@ -51,6 +51,7 @@ const Game: React.FC = () => {
   );
   const [peerCount, setPeerCount] = useState(0);
   const roomRef = useRef<any>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
 
   const detectMobileDevice = () => {
     return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -302,14 +303,16 @@ const Game: React.FC = () => {
           setPeerCount(count > 0 ? count : 1);
   
           // Remove remote player from the scene
-          const remotePlayerMesh = scene.getObjectByName(peerId);
-          if (remotePlayerMesh) {
-            scene.remove(remotePlayerMesh);
+          if (sceneRef.current) {
+            const remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
+            if (remotePlayerMesh) {
+              sceneRef.current.remove(remotePlayerMesh);
+            }
           }
         });
   
-        const [sendPlayerData, getPlayerData] = room.makeAction('p-data');
-        const [sendObjectCollected, getObjectCollected] = room.makeAction('o-collected');
+        const [sendPlayerData, getPlayerData] = room.makeAction("p-data");
+        const [sendObjectCollected, getObjectCollected] = room.makeAction("o-collected");
   
         const sendPlayerDataInterval = () => {
           if (playerRef.current) {
@@ -332,9 +335,11 @@ const Game: React.FC = () => {
         });
   
         getObjectCollected((objectId) => {
-          const object = scene.getObjectByName(objectId);
-          if (object) {
-            scene.remove(object);
+          if (sceneRef.current) {
+            const object = sceneRef.current.getObjectByName(objectId);
+            if (object) {
+              sceneRef.current.remove(object);
+            }
           }
         });
   
@@ -359,7 +364,6 @@ const Game: React.FC = () => {
     }
   }, [currentLevelId, gameState.collectedObjects]);
 
-  
   // Main game setup and loop
   useEffect(() => {
     if (!mountRef.current || !currentLevelId) return;
@@ -369,6 +373,7 @@ const Game: React.FC = () => {
 
     // Scene setup
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.background = new THREE.Color("#E0E0E0");
     const camera = new THREE.PerspectiveCamera(
       75,
