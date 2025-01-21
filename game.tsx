@@ -293,27 +293,19 @@ const Game: React.FC = () => {
         roomRef.current = room;
         if (window) window.room = roomRef.current;
   
-        room.onPeerJoin((peerId) => {
-          const count = Object.keys(room.getPeers()).length - 1 || 1;
-          setPeerCount(count > 0 ? count : 1);
-          
-          // Add remote player to the scene
+        const [sendPlayerData, getPlayerData] = room.makeAction('p-data');
+        const [sendObjectCollected, getObjectCollected] = room.makeAction('o-collected');
+  
+        // Add remote player to the scene
+        const addRemotePlayer = (peerId) => {
           if (sceneRef.current) {
-            const remotePlayerGeometry = new THREE.CylinderGeometry(
-              0.5,
-              0.5,
-              0.2,
-              32
-            );
+            const remotePlayerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
             const remotePlayerMaterial = new THREE.MeshStandardMaterial({
               color: 0x303030,
               roughness: 0.7,
               metalness: 0.3,
             });
-            const remotePlayerMesh = new THREE.Mesh(
-              remotePlayerGeometry,
-              remotePlayerMaterial
-            );
+            const remotePlayerMesh = new THREE.Mesh(remotePlayerGeometry, remotePlayerMaterial);
             remotePlayerMesh.name = peerId;
   
             // Roomba details for remote player
@@ -337,23 +329,27 @@ const Game: React.FC = () => {
             remotePlayerMesh.receiveShadow = true;
             sceneRef.current.add(remotePlayerMesh);
           }
-        });
+        };
   
-        room.onPeerLeave((peerId) => {
-          const count = Object.keys(room.getPeers()).length - 1 || 1;
-          setPeerCount(count > 0 ? count : 1);
-  
-          // Remove remote player from the scene
+        // Remove remote player from the scene
+        const removeRemotePlayer = (peerId) => {
           if (sceneRef.current) {
             const remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
             if (remotePlayerMesh) {
               sceneRef.current.remove(remotePlayerMesh);
             }
           }
+        };
+  
+        room.onPeerJoin(peerId => {
+          setPeerCount(prevCount => prevCount + 1);
+          addRemotePlayer(peerId);
         });
   
-        const [sendPlayerData, getPlayerData] = room.makeAction('p-data');
-        const [sendObjectCollected, getObjectCollected] = room.makeAction('o-collected');
+        room.onPeerLeave(peerId => {
+          setPeerCount(prevCount => Math.max(prevCount - 1, 0));
+          removeRemotePlayer(peerId);
+        });
   
         const sendPlayerDataInterval = () => {
           if (playerRef.current) {
@@ -369,7 +365,7 @@ const Game: React.FC = () => {
         const interval = setInterval(sendPlayerDataInterval, 100);
   
         getPlayerData((data, peerId) => {
-          setRemotePlayers((prev) => ({
+          setRemotePlayers(prev => ({
             ...prev,
             [peerId]: data,
           }));
@@ -405,6 +401,7 @@ const Game: React.FC = () => {
     }
   }, [currentLevelId, gameState.collectedObjects]);
 
+  
   // Main game setup and loop
   useEffect(() => {
     if (!mountRef.current || !currentLevelId) return;
@@ -414,7 +411,7 @@ const Game: React.FC = () => {
 
     // Scene setup
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
+    sceneRef.current = scene;  // Set sceneRef.current to the newly created scene
     scene.background = new THREE.Color("#E0E0E0");
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -1018,55 +1015,51 @@ const Game: React.FC = () => {
       renderer.render(scene, camera);
     };
 
-    // Multiplayer Handlers
-    Object.keys(remotePlayers).forEach((peerId) => {
-      let remotePlayer = remotePlayers[peerId];
-      if (!scene.getObjectByName(peerId)) {
-        // Create and add remote player to the scene
-        const remotePlayerGeometry = new THREE.CylinderGeometry(
-          0.5,
-          0.5,
-          0.2,
-          32
-        );
-        const remotePlayerMaterial = new THREE.MeshStandardMaterial({
-          color: 0x303030,
-          roughness: 0.7,
-          metalness: 0.3,
-        });
-        const remotePlayerMesh = new THREE.Mesh(
-          remotePlayerGeometry,
-          remotePlayerMaterial
-        );
-        remotePlayerMesh.name = peerId;
-
-        // Roomba details for remote player
-        const topDisc = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
-          new THREE.MeshStandardMaterial({ color: 0x404040 })
-        );
-        topDisc.position.y = 0.1;
-        remotePlayerMesh.add(topDisc);
-
-        const sensorBump = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
-          new THREE.MeshStandardMaterial({ color: 0x202020 })
-        );
-        sensorBump.position.set(0, 0.15, 0.3);
-        remotePlayerMesh.add(sensorBump);
-
-        remotePlayerMesh.scale.setScalar(0.25);
-        remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
-        remotePlayerMesh.castShadow = true;
-        remotePlayerMesh.receiveShadow = true;
-        scene.add(remotePlayerMesh);
-      } else {
-        // Update remote player position and rotation
-        const remotePlayerMesh = scene.getObjectByName(peerId);
-        remotePlayerMesh.position.set(...remotePlayer.position);
-        remotePlayerMesh.rotation.set(...remotePlayer.rotation);
-      }
-    });
+    // Multiplayer Handlers - Update player position and rotation
+    useEffect(() => {
+      Object.keys(remotePlayers).forEach((peerId) => {
+        let remotePlayer = remotePlayers[peerId];
+        if (sceneRef.current) {
+          let remotePlayerMesh = sceneRef.current.getObjectByName(peerId);
+          if (!remotePlayerMesh) {
+            // Create and add remote player to the scene
+            const remotePlayerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+            const remotePlayerMaterial = new THREE.MeshStandardMaterial({
+              color: 0x303030,
+              roughness: 0.7,
+              metalness: 0.3,
+            });
+            remotePlayerMesh = new THREE.Mesh(remotePlayerGeometry, remotePlayerMaterial);
+            remotePlayerMesh.name = peerId;
+    
+            // Roomba details for remote player
+            const topDisc = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.45, 0.45, 0.05, 32),
+              new THREE.MeshStandardMaterial({ color: 0x404040 })
+            );
+            topDisc.position.y = 0.1;
+            remotePlayerMesh.add(topDisc);
+    
+            const sensorBump = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.1, 0.1, 0.1, 16),
+              new THREE.MeshStandardMaterial({ color: 0x202020 })
+            );
+            sensorBump.position.set(0, 0.15, 0.3);
+            remotePlayerMesh.add(sensorBump);
+    
+            remotePlayerMesh.scale.setScalar(0.25);
+            remotePlayerMesh.position.y = 0.1 * remotePlayerMesh.scale.y;
+            remotePlayerMesh.castShadow = true;
+            remotePlayerMesh.receiveShadow = true;
+            sceneRef.current.add(remotePlayerMesh);
+          } else {
+            // Update remote player position and rotation
+            remotePlayerMesh.position.set(...remotePlayer.position);
+            remotePlayerMesh.rotation.set(...remotePlayer.rotation);
+          }
+        }
+      });
+    }, [remotePlayers]);
 
     // Handle window resize
     const onWindowResize = () => {
