@@ -9,8 +9,7 @@ import type { GameObject, GameState } from "./types/game";
 import { levels, getCurrentLevel, distributeObjects } from "./levels";
 import StartMenu from "./StartMenu";
 
-import dynamic from 'next/dynamic';
-const joinRoom = dynamic(() => import('trystero').then(mod => mod.joinRoom), { ssr: false });
+import { joinRoom } from 'trystero'; // trystero/torrent
 
 const Game: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
