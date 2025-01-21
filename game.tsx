@@ -45,7 +45,7 @@ const Game: React.FC = () => {
   const [gameOver, setGameOver] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
-  const [peerCount, setPeerCount] = useState(1);
+  const [peerCount, setPeerCount] = useState(0);
   const roomRef = useRef<any>(null);
 
   const detectMobileDevice = () => {
@@ -275,10 +275,17 @@ const Game: React.FC = () => {
     if (currentLevelId) {
       const currentLevel = getCurrentLevel(currentLevelId);
       if (currentLevel.multiplayer) {
-        const room = joinRoom({ appId: currentLevel.multiplayer }, currentLevelId);
+	const gameId = 'katamini-";
+        const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, gameId + currentLevelId);
         roomRef.current = room;
-        room.onPeerJoin(() => setPeerCount(room.getPeers().length + 1));
-        room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+	let count = ( Object.keys(room.getPeers()).length || 0 );
+        room.onPeerJoin(() => setPeerCount( count ));
+        room.onPeerLeave(() => setPeerCount( count ));
+      } else {
+        if (roomRef.current) {
+          roomRef.current.leave();
+          roomRef.current = null;
+        }
       }
     }
   }, [currentLevelId]);
@@ -963,9 +970,8 @@ return (
             <div style={centerDotStyles} />
           </div>
         )}
-
 	<div style={{ position: 'fixed', bottom: '10px', right: '10px', backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '5px', borderRadius: '5px' }}>
-	  {`Players: ${peerCount}`}
+	  {`Players: ${peerCount + 1}`}
 	</div>
 
       </>
