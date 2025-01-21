@@ -276,20 +276,24 @@ const Game: React.FC = () => {
       const currentLevel = getCurrentLevel(currentLevelId);
       if (currentLevel.multiplayer) {
 	const gameId = "katamini-";
-        const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, gameId + currentLevelId);
+        const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, currentLevelId);
         roomRef.current = room;
-	let count = ( Object.keys(room.getPeers()).length || 0 );
-        room.onPeerJoin(() => setPeerCount( count ));
-        room.onPeerLeave(() => setPeerCount( count ));
-      } else {
+	if (window) window.room = roomRef.current;
+	// Count current player as 1 base
+        room.onPeerJoin(() => setPeerCount( Object.keys(room.getPeers()).length - 1 || 1 ));
+        room.onPeerLeave(() => setPeerCount( Object.keys(room.getPeers()).length - 1 || 1 ));
+      } else if (roomRef.current) {
+          roomRef.current.leave();
+          roomRef.current = null;
+      }
+    } else {
         if (roomRef.current) {
           roomRef.current.leave();
           roomRef.current = null;
+	  if (window.room) window.room = null;
         }
-      }
     }
   }, [currentLevelId]);
-
 
 
   // Main game setup and loop
