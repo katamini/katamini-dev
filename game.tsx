@@ -45,6 +45,7 @@ const Game: React.FC = () => {
   const [gameOver, setGameOver] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
+  const [isMultiplayer, setIsMultiplayer] = useState(false);
   const [peerCount, setPeerCount] = useState(0);
   const roomRef = useRef<any>(null);
 
@@ -275,6 +276,7 @@ const Game: React.FC = () => {
     if (currentLevelId) {
       const currentLevel = getCurrentLevel(currentLevelId);
       if (currentLevel.multiplayer) {
+	setIsMultiplayer(true);
 	const gameId = "katamini-";
         const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, currentLevelId);
         roomRef.current = room;
@@ -287,6 +289,7 @@ const Game: React.FC = () => {
           roomRef.current = null;
       }
     } else {
+	setIsMultiplayer(false);
         if (roomRef.current) {
           roomRef.current.leave();
           roomRef.current = null;
@@ -974,10 +977,11 @@ return (
             <div style={centerDotStyles} />
           </div>
         )}
+	{isMultiplayer && (
 	<div style={{ position: 'fixed', bottom: '10px', right: '10px', backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '5px', borderRadius: '5px' }}>
 	  {`Players: ${peerCount + 1}`}
 	</div>
-
+	)}
       </>
     )}
   </>
