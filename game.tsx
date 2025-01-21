@@ -20,6 +20,8 @@ const Game: React.FC = () => {
   const playerRef = useRef<THREE.Mesh | null>(null);
   const collectedObjectsRef = useRef<THREE.Group | null>(null);
   const multiplayerManagerRef = useRef<MultiplayerManager | null>(null);
+  const lastPositionRef = useRef<{x: number, y: number, z: number}>({ x: 0, y: 0, z: 0 });
+
   const finishedRef = useRef(false);
   const keysRef = useRef({
     ArrowUp: false,
@@ -234,6 +236,49 @@ const Game: React.FC = () => {
 	    const direction = new THREE.Vector3(0, 0, -1);
 	    direction.applyQuaternion(player.quaternion);
 	    
+	    // Check if position has changed significantly (more than 0.01 units)
+	    const positionChanged = 
+	      Math.abs(player.position.x - lastPositionRef.current.x) > 0.01 ||
+	      Math.abs(player.position.y - lastPositionRef.current.y) > 0.01 ||
+	      Math.abs(player.position.z - lastPositionRef.current.z) > 0.01;
+	
+	    // If position changed significantly or other important states changed
+	    if (positionChanged) {
+	      lastPositionRef.current = {
+	        x: player.position.x,
+	        y: player.position.y,
+	        z: player.position.z
+	      };
+	      
+	      const playerState: PlayerState = {
+	        position: [player.position.x, player.position.y, player.position.z],
+	        direction: [direction.x, direction.y, direction.z],
+	        size: gameState.playerSize,
+	        collectedObjects: gameState.collectedObjects
+	      };
+	      
+	      multiplayerManagerRef.current.broadcastPlayerState(playerState);
+	    }
+	  }
+	}, [
+	  gameState.playerSize, 
+	  gameState.collectedObjects,
+	  // Only check position/rotation at a fixed interval
+	  Math.floor((Date.now() / 50)), // Check every 50ms
+	]);
+	
+  // Add a new effect for important state changes that should be instant
+  useEffect(() => {
+	  if (
+	    multiplayerManagerRef.current && 
+	    playerRef.current && 
+	    currentLevelId && 
+	    !finishedRef.current
+	  ) {
+	    const player = playerRef.current;
+	    const direction = new THREE.Vector3(0, 0, -1);
+	    direction.applyQuaternion(player.quaternion);
+	    
 	    const playerState: PlayerState = {
 	      position: [player.position.x, player.position.y, player.position.z],
 	      direction: [direction.x, direction.y, direction.z],
@@ -241,20 +286,11 @@ const Game: React.FC = () => {
 	      collectedObjects: gameState.collectedObjects
 	    };
 	    
-	    multiplayerManagerRef.current.broadcastPlayerState(playerState);
+	    // Force immediate broadcast for important state changes
+	    multiplayerManagerRef.current.forceBroadcastPlayerState(playerState);
 	  }
-	}, [
-	  gameState.playerSize, 
-	  gameState.collectedObjects,
-	  playerRef.current?.position.x,
-	  playerRef.current?.position.y,
-	  playerRef.current?.position.z,
-	  playerRef.current?.quaternion.x,
-	  playerRef.current?.quaternion.y,
-	  playerRef.current?.quaternion.z,
-	  playerRef.current?.quaternion.w
-  ]);
-
+  }, [gameState.playerSize, gameState.collectedObjects.length]); // Only trigger on important changes
+	
   // Music system
   useEffect(() => {
 	  let audio: HTMLAudioElement | null = null;
@@ -615,6 +651,14 @@ const Game: React.FC = () => {
 
     if (currentLevel.multiplayer && roomRef.current) {
 	  multiplayerManagerRef.current = new MultiplayerManager(roomRef.current, scene);	  
+	  // Initialize last position
+	  if (playerRef.current) {
+	    lastPositionRef.current = {
+	      x: playerRef.current.position.x,
+	      y: playerRef.current.position.y,
+	      z: playerRef.current.position.z
+	    };
+	  }
 	  // Set up handler for when other players collect objects
 	  multiplayerManagerRef.current.setOnObjectCollected((objectId: string) => {
 	    objects.forEach((object, index) => {
