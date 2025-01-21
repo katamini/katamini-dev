@@ -308,8 +308,8 @@ const Game: React.FC = () => {
           }
         });
   
-        const [sendPlayerData, getPlayerData] = room.makeAction('player-data');
-        const [sendObjectCollected, getObjectCollected] = room.makeAction('object-collected');
+        const [sendPlayerData, getPlayerData] = room.makeAction('p-data');
+        const [sendObjectCollected, getObjectCollected] = room.makeAction('o-collected');
   
         const sendPlayerDataInterval = () => {
           if (playerRef.current) {
