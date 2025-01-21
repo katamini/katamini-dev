@@ -40,7 +40,7 @@ export class MultiplayerManager {
     
     // Initialize P2P actions
     [this.sendPlayerState, this.getPlayerState] = room.makeAction('playerState');
-    [this.sendObjectCollected, this.getObjectCollected] = room.makeAction('objectCollected');
+    [this.sendObjectCollected, this.getObjectCollected] = room.makeAction('playerObj');
 
     // Set up peer event handlers
     room.onPeerJoin((peerId) => this.handlePeerJoin(peerId));
