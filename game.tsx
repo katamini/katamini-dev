@@ -224,17 +224,36 @@ const Game: React.FC = () => {
 
   // Multiplayer System
   useEffect(() => {
-	  if (multiplayerManagerRef.current && playerRef.current && currentLevelId) {
+	  if (
+	    multiplayerManagerRef.current && 
+	    playerRef.current && 
+	    currentLevelId && 
+	    !finishedRef.current
+	  ) {
 	    const player = playerRef.current;
+	    const direction = new THREE.Vector3(0, 0, -1);
+	    direction.applyQuaternion(player.quaternion);
+	    
 	    const playerState: PlayerState = {
 	      position: [player.position.x, player.position.y, player.position.z],
-	      direction: [player.getWorldDirection(new THREE.Vector3()).toArray()],
+	      direction: [direction.x, direction.y, direction.z],
 	      size: gameState.playerSize,
 	      collectedObjects: gameState.collectedObjects
 	    };
+	    
 	    multiplayerManagerRef.current.broadcastPlayerState(playerState);
 	  }
-  }, [gameState.playerSize, gameState.collectedObjects]);
+	}, [
+	  gameState.playerSize, 
+	  gameState.collectedObjects,
+	  playerRef.current?.position.x,
+	  playerRef.current?.position.y,
+	  playerRef.current?.position.z,
+	  playerRef.current?.quaternion.x,
+	  playerRef.current?.quaternion.y,
+	  playerRef.current?.quaternion.z,
+	  playerRef.current?.quaternion.w
+  ]);
 
   // Music system
   useEffect(() => {
@@ -595,7 +614,21 @@ const Game: React.FC = () => {
     camera.lookAt(player.position);
 
     if (currentLevel.multiplayer && roomRef.current) {
-      multiplayerManagerRef.current = new MultiplayerManager(roomRef.current, scene);
+	  multiplayerManagerRef.current = new MultiplayerManager(roomRef.current, scene);	  
+	  // Set up handler for when other players collect objects
+	  multiplayerManagerRef.current.setOnObjectCollected((objectId: string) => {
+	    objects.forEach((object, index) => {
+	      if (object.uuid === objectId) {
+	        scene.remove(object);
+	        const aura = auras[index];
+	        if (aura) {
+	          aura.visible = false;
+	          aura.parent?.remove(aura);
+	        }
+	        totalObjects--;
+	      }
+	    });
+	  });
     }
 
     let startTime = Date.now();
@@ -713,7 +746,39 @@ const Game: React.FC = () => {
 
         if (distance < combinedRadius) {
           if (object.userData.size <= Math.max(gameState.playerSize * 1.2, smallestObject.userData.size)) {
-		  		  
+
+	    // Broadcast object collection in multiplayer
+	    if (multiplayerManagerRef.current) {
+		  const peerMeshes = multiplayerManagerRef.current.getPeerMeshes();
+		  const peerStates = multiplayerManagerRef.current.getPeerStates();
+		  
+		  peerMeshes.forEach((peerMesh, peerId) => {
+		    const peerState = peerStates.get(peerId);
+		    if (!peerState) return;
+		
+		    // Check collision with peer
+		    const distance = player.position.distanceTo(peerMesh.position);
+		    const combinedRadius = player.scale.x * 0.5 + peerMesh.scale.x * 0.5;
+		    
+		    if (distance < combinedRadius) {
+		      // Bounce off peers like objects
+		      collisionOccurred = true;
+		      const pushDirection = player.position.clone()
+		        .sub(peerMesh.position)
+		        .normalize();
+		      playerVelocity.reflect(pushDirection).multiplyScalar(bounceForce);
+		
+		      // Squish effect
+		      player.scale.x *= 0.95;
+		      player.scale.z *= 1.05;
+		      setTimeout(() => {
+		        player.scale.x /= 0.95;
+		        player.scale.z /= 1.05;
+		      }, 100);
+		    }
+		  });
+	    }
+
             // Object collection logic
             scene.remove(object);
             const aura = auras[index];
