@@ -275,7 +275,7 @@ const Game: React.FC = () => {
     if (currentLevelId) {
       const currentLevel = getCurrentLevel(currentLevelId);
       if (currentLevel.multiplayer) {
-	const gameId = 'katamini-";
+	const gameId = "katamini-";
         const room = joinRoom({ appId: gameId + currentLevel.multiplayer }, gameId + currentLevelId);
         roomRef.current = room;
 	let count = ( Object.keys(room.getPeers()).length || 0 );
