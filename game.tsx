@@ -791,7 +791,7 @@ const Game: React.FC = () => {
                 
                 // Send message to other players
                 if (roomRef.current) {
-                  const [sendObjectCollected] = roomRef.current.makeAction('object-collected');
+                  // const [sendObjectCollected] = roomRef.current.makeAction('o-collected');
                   sendObjectCollected(object.uuid);
                 }
         
